@@ -1,0 +1,36 @@
+# The patch layer that mounts this project's plugin into a dsh profile.
+#
+# A bundle's substance IS this file: a top-level YAML list of loader patches.
+# `dsh plugin --profile <name> add <this package>` appends the package to the
+# profile's `dsh.profile.bundles`, and from then on every boot applies these
+# patches over the composed tree.
+#
+# Layer order at boot (later wins per row):
+#   1. bundle layers, in `dsh.profile.bundles` order  ← this file
+#   2. $DSH_HOME/profiles/<name>/cordis.patch.yml     (per-profile user layer)
+#   3. $DSH_HOME/cordis.patch.yml                     (machine-level user layer)
+#   4. --patch overlays, in argv order
+#
+# So a user can always override or disable the row below without editing this
+# file. Verify the composed result with `dsh --profile <name> --dump-config`.
+
+- insert:
+    # `id` is how every later layer addresses this row. Keep it stable: renaming
+    # it silently orphans a user's override (a patch naming an unknown id is only
+    # a stderr warning, not an error).
+    - id: plugin-hello
+      name: '@example/dsh-plugin-hello'
+      config:
+        defaultLanguage: en
+
+# To override this row from a user layer, restate the whole `config` — an
+# id-targeted patch REPLACES the matched config rather than deep-merging:
+#
+#   - id: plugin-hello
+#     config:
+#       defaultLanguage: zh
+#
+# To turn it off without uninstalling:
+#
+#   - id: plugin-hello
+#     disabled: true

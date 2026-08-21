@@ -1,0 +1,44 @@
+{
+  "name": "create-dsh-plugin-root",
+  "version": "0.1.0-rc.7",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json && tsdown",
+    "clean": "rm -rf packages/*/*/lib packages/*/*/tsconfig.tsbuildinfo tsconfig.tsbuildinfo packages/cli/create/template packages/cli/create/docs .smoke",
+    "typecheck": "tsc -b tsconfig.json && tsc -p tsconfig.tests.json",
+    "lint": "oxlint --type-aware .",
+    "lint:fix": "oxlint --type-aware . --fix",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "hygiene": "pnpm run publint",
+    "publint": "pnpm --filter create-dsh-plugin exec publint",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
+    "scaffold:smoke": "tsx scripts/scaffold-smoke.ts",
+    "trace": "tsx packages/cli/create/src/dsh-trace.ts",
+    "postinstall": "node scripts/install-lefthook.mjs"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-attachment": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-brand": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-timeout": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-typert-protocol": "0.1.0-rc.7",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^22.20.0",
+    "@vitest/coverage-v8": "^4.1.8",
+    "lefthook": "^2.1.9",
+    "oxlint": "1.76.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "publint": "^0.3.21",
+    "tsdown": "^0.22.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.8"
+  }
+}

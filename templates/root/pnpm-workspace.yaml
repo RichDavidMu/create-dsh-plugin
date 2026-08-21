@@ -1,0 +1,18 @@
+packages:
+  - packages/*/*
+
+# pnpm >=10 blocks dependency build scripts until they are allowed by name, and
+# treats an unresolved decision as an install failure. These two are toolchain
+# dependencies of this repository, not of your plugin: esbuild compiles the
+# vitest/tsdown pipeline, lefthook installs the local git hooks.
+allowBuilds:
+  esbuild: true
+  lefthook: true
+
+# dsh Service Definition packages are peer dependencies of the implementations
+# that publish them. A dsh profile resolves those through the installation
+# fallback (`$DSH_HOME/profiles/node_modules`), so a plugin must NOT bundle its
+# own copies — two copies of one service means two module singletons and a
+# capability that silently fails to connect. Keeping auto-install off makes any
+# accidental reliance on an undeclared peer fail here rather than at runtime.
+autoInstallPeers: false

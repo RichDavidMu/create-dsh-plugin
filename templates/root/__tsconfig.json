@@ -1,0 +1,16 @@
+{
+  // Solution file: the aggregate `tsc -b tsconfig.json` builds, and the tsserver
+  // entry. `extends` carries the base compiler options and paths, which is what
+  // lets tooling with no nearer project — type-aware lint over `tests/` — resolve
+  // imports and see the Node types. `files: []` keeps it program-less.
+  //
+  // Each workspace package owns its own tsconfig and appears here exactly once:
+  // the dsh convention that repo-wide programs seed a face config rather than
+  // letting packages reference each other ad hoc. Add one entry per new package.
+  // NEVER add include/files entries here.
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./packages/plugin/hello" }
+  ]
+}

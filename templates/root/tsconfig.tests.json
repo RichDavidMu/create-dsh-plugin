@@ -1,0 +1,25 @@
+{
+  // Type-checking face for test sources — everything the build face deliberately
+  // leaves out. Separate because the build face emits `lib/types` with a
+  // `rootDir` of `src`, and a project cannot both emit that layout and include
+  // files outside it.
+  //
+  // `noEmit` because nothing here ships. `rewriteRelativeImportExtensions: false`
+  // because that rewrite requires every cross-project import to keep the same
+  // relative path in output as in input, which a checking-only program neither
+  // has nor needs. `composite: false` follows from `noEmit` — this face is run
+  // with `tsc -p`, never referenced.
+  //
+  // `scripts/` is absent on purpose: those files arrive already checked from
+  // `create-dsh-plugin`.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "rewriteRelativeImportExtensions": false
+  },
+  "include": [
+    "packages/*/*/src/**/*.ts",
+    "packages/*/*/tests/**/*.ts"
+  ]
+}

@@ -1,0 +1,17 @@
+# Local checkpoints, kept fast. `pnpm run check` is the full gate.
+# Installed by the root `postinstall` (lefthook install).
+
+pre-commit:
+  jobs:
+    - name: lint (staged)
+      glob: '*.{ts,mts,cts}'
+      run: node_modules/.bin/oxlint --fix --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+
+    - name: whitespace (staged)
+      run: git diff --cached --check
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: pnpm run typecheck

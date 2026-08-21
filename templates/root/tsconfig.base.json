@@ -1,0 +1,37 @@
+{
+  // Copied from deepseek-harness `tsconfig.base.json` so plugin source here
+  // compiles under the same rules as dsh's own packages.
+  //
+  // Doubles as the resolution facade for vite-tsconfig-paths (vitest points
+  // here). NEVER add `include`/`files`: that would leak into every extending
+  // package project and narrow the facade's match-all scope.
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "composite": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": false,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["node"],
+    // Every workspace package resolves to its SOURCE, so a built `lib/` copy can
+    // never be loaded as a second module singleton. Add one line per package.
+    "paths": {
+      "@example/dsh-plugin-hello": ["./packages/plugin/hello/src/index.ts"],
+      "@example/dsh-plugin-hello/invariant": ["./packages/plugin/hello/src/invariant.ts"]
+    }
+  }
+}

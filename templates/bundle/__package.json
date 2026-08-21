@@ -1,0 +1,21 @@
+{
+  "name": "@example/dsh-bundle-hello",
+  "version": "0.1.0-rc.7",
+  "description": "Profile bundle that mounts @example/dsh-plugin-hello into a dsh composition",
+  "license": "MIT",
+  "type": "module",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dependencies": {
+    "@example/dsh-plugin-hello": "workspace:^"
+  }
+}

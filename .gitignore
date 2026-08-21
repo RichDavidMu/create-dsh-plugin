@@ -1,0 +1,13 @@
+node_modules/
+lib/
+*.tsbuildinfo
+coverage/
+.DS_Store
+*.tgz
+
+# Assembled by packages/cli/create's prepack; the sources live in templates/ and docs/
+packages/cli/create/template/
+packages/cli/create/docs/
+
+# Scaffold smoke-test output
+.smoke/

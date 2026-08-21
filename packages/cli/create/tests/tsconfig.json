@@ -1,0 +1,11 @@
+{
+  // Present so type-aware lint has a program for these files: oxlint resolves a
+  // file's types through its nearest `tsconfig.json`, and the package's own
+  // project includes only `src`. Without this, every `node:*` import here would
+  // degrade to `error` and the unsafe-* rules would report hundreds of lines.
+  //
+  // The whole-repository equivalent is `tsconfig.tests.json`, which `pnpm run
+  // typecheck` runs; this file only narrows it to one package.
+  "extends": "../../../../tsconfig.tests.json",
+  "include": ["../src/**/*.ts", "**/*.ts"]
+}

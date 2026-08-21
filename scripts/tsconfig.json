@@ -1,0 +1,6 @@
+{
+  // Repository scripts are checked and linted like source, but they emit nothing
+  // and live outside every package project — so they use the checking face.
+  "extends": "../tsconfig.tests.json",
+  "include": ["**/*.ts"]
+}

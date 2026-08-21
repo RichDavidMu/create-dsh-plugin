@@ -1,0 +1,48 @@
+{
+  "name": "create-dsh-plugin",
+  "version": "0.1.0-rc.7",
+  "description": "Scaffold a DeepSeek Harness plugin project. The release version IS the dsh version it targets.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-dsh-plugin": "./lib/bin.js",
+    "dsh-trace": "./lib/dsh-trace.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "template",
+    "docs",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "plugin",
+    "scaffold"
+  ],
+  "scripts": {
+    "prepack": "tsx ../../../scripts/prepare-cli-package.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muchenwei/create-dsh-plugin.git",
+    "directory": "packages/cli/create"
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "publint": "^0.3.21"
+  }
+}

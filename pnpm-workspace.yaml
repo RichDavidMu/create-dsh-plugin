@@ -1,0 +1,14 @@
+packages:
+  - packages/*/*
+
+allowBuilds:
+  esbuild: true
+  lefthook: true
+
+# The template package depends on published @deepseek-ai/dsh-* releases whose
+# peer dependencies are Service Definition packages it does not import
+# directly. dsh profiles resolve those through the installation fallback
+# (`$DSH_HOME/profiles/node_modules`), so a plugin author never installs them;
+# this repository mirrors that stance so the template compiles against exactly
+# the dependency set a generated project declares.
+autoInstallPeers: false
