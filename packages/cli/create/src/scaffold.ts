@@ -27,7 +27,7 @@ export interface TemplateRoots {
   readonly bundle: string
   /** Authoring documentation copied into the generated project. */
   readonly docs: string
-  /** Directory holding `trace.ts` and `trace-bin.ts`, copied in as the project's own tool. */
+  /** Directory holding the tracing and source-graph tools, copied in as the project's own. */
   readonly tools: string
 }
 
@@ -166,11 +166,17 @@ export function scaffold(request: ScaffoldRequest, cwd: string = process.cwd()):
     ...materialize(roots.plugin, join(directory, 'packages', 'plugin', naming.role), naming, range),
     ...materialize(roots.bundle, join(directory, 'packages', 'bundle', `${naming.role}-bundle`), naming, range),
     ...materialize(roots.docs, join(directory, 'docs'), naming, range),
-    // The dependency-tracing tool travels as the project's own source, so a
-    // generated project can inspect its dsh dependencies with nothing installed
-    // beyond what it already declares. `trace-bin.ts` imports `./trace.ts`, so
-    // both land in one directory and the relative import still resolves.
-    ...materializeFiles(roots.tools, join(directory, 'scripts'), ['trace.ts', 'dsh-trace.ts'], naming),
+    // The dependency-tracing and source-graph tools travel as the project's own
+    // source, so a generated project can inspect its dsh dependencies and build a
+    // graph over their source with nothing installed beyond what it declares.
+    // Each bin imports a sibling by relative path, so all four land in one
+    // directory and those imports still resolve.
+    ...materializeFiles(
+      roots.tools,
+      join(directory, 'scripts'),
+      ['trace.ts', 'dsh-trace.ts', 'dsh-source.ts', 'graph-runner.ts', 'dsh-graph.ts'],
+      naming,
+    ),
   ]
 
   return {

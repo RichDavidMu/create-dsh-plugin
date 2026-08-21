@@ -18,7 +18,8 @@
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "pack:bundle": "pnpm run build && pnpm --filter ./packages/bundle/hello-bundle pack --pack-destination ..",
     "trace": "tsx scripts/dsh-trace.ts",
-    "postinstall": "node scripts/install-lefthook.mjs"
+    "dsh:graph": "tsx scripts/dsh-graph.ts",
+    "postinstall": "node scripts/postinstall.mjs"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-attachment": "0.1.0-rc.7",

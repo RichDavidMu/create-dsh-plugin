@@ -1,9 +1,19 @@
 # Writing a DeepSeek Harness plugin
 
-This document is self-contained: everything below is stated here, not left as a
-pointer into the dsh source tree. When you do want the authoritative source, see
-[tracing-dsh.md](tracing-dsh.md) — but you should not need it to write a working
-plugin.
+This document covers the common path in full — the two plugin shapes, `inject`,
+config, effects, the tool contract, testing — and states it here rather than
+leaving it as a pointer into the dsh source tree. You can write a working plugin
+from this page alone.
+
+It is not a description of dsh's surface area, and cannot become one: most
+services, most events, and most fields of the option objects below are absent by
+design. **When you need something this document does not state, read it from dsh
+itself instead of inferring it.** Two local routes are already set up: the pinned
+release's full source, indexed as a code graph under `.dsh-source/`, and the
+installed declarations, whose JSDoc is the contract. `pnpm run dsh:graph` builds
+the first, `pnpm run trace <pkg>` locates the second, and
+[tracing-dsh.md](tracing-dsh.md) explains when each is the right one. Section 10
+lists what this page leaves out and where each piece is read.
 
 Everything in dsh is a plugin. There is no plugin API layered on top of the
 runtime; a plugin IS how the runtime is assembled. Adding a tool, a prompt
@@ -329,11 +339,29 @@ the test with it and say why.
 | tool cannot be interrupted | `exec.signal` not forwarded to the blocking await |
 | model retries the same bad call | error message did not say what a valid input looks like |
 
-## 10. Deeper reading
+## 10. Where this document stops
+
+Everything above is one plugin's worth of dsh. What it leaves out, and where each
+piece is read — `pnpm run trace <pkg>` prints the absolute paths, the code graph
+under `.dsh-source/` answers the rest, and [tracing-dsh.md](tracing-dsh.md)
+explains which to reach for:
+
+| You need | Read |
+|---|---|
+| a service beyond `tools`, `systemPrompt`, `invariants` | that package's `lib/types/*.d.ts`; its `interface Context` names the `ctx` key |
+| which events exist, and which listeners must call `next()` | `interface Events`, plus the `@mode` tag on each declaration |
+| every field of `defineTool`'s options | `DefineToolOptions` in `dsh-tools/lib/types/schema.d.ts` |
+| card kinds and presentation types | `dsh-tools/lib/types/presentation.d.ts` |
+| a package's config keys, or its token / KV-cache cost | that package's `README.md` |
+| how something is implemented, or what calls what | the code graph: `codegraph explore '<question>' --path .dsh-source/dsh-v<version>` |
+| why a design is that way | the snapshot's own `docs/` and `.agents/notes/` |
+
+Guessing instead is the expensive move. The compiler rejects a misspelled name; it
+accepts a listener that forgets `next()` and a `render` that is not pure.
+
+Two more guides in this project:
 
 - [cordis-essentials.md](cordis-essentials.md) — Context, fibers, services,
   effects, waterfall events.
 - [loading-into-dsh.md](loading-into-dsh.md) — get this plugin running inside a
   real dsh profile.
-- [tracing-dsh.md](tracing-dsh.md) — read the authoritative contract of any dsh
-  service without cloning the repository.

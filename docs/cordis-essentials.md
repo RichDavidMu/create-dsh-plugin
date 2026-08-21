@@ -145,5 +145,5 @@ Everything else in a row stays literal. See
 ## Further reading
 
 The vendored Cordis source and dsh's own `docs/cordis-primer.md` are in the
-upstream repository — [tracing-dsh.md](tracing-dsh.md) explains how to reach the
-exact release you depend on.
+snapshot under `.dsh-source/` once `pnpm run dsh:graph` has fetched it —
+[tracing-dsh.md](tracing-dsh.md) explains that route and the others.

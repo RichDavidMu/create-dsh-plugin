@@ -13,7 +13,7 @@ import { defineConfig } from 'tsdown'
  */
 export default defineConfig({
   workspace: ['packages/*/*'],
-  entry: ['lib/types/{index,invariant,bin,dsh-trace}.js'],
+  entry: ['lib/types/{index,invariant,bin,dsh-trace,dsh-graph}.js'],
   outDir: 'lib',
   format: ['esm'],
   platform: 'node',

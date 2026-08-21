@@ -11,3 +11,8 @@ packages/cli/create/docs/
 
 # Scaffold smoke-test output
 .smoke/
+
+# The dsh source snapshot and the code graphs over it: fetched and rebuilt by
+# `pnpm run dsh:graph` from one immutable tag, so the recipe is the artifact.
+.dsh-source/
+.codegraph/

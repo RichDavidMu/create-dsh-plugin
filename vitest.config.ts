@@ -23,10 +23,14 @@ export default defineConfig({
       provider: 'v8',
       include: ['packages/*/*/src/**/*.ts'],
       exclude: [
-        // Process entry points: argv parsing and exit codes are covered through
-        // the exported functions they call, and a bin has no importable surface.
+        // Process entry points, and nothing else: each one is argv parsing, an io
+        // object built from `node:` APIs, and an exit code. The decisions they make
+        // live in `dsh-source.ts` and the ordering in `graph-runner.ts`, both
+        // covered here. Anything in a bin that deserves a test belongs in one of
+        // those instead.
         'packages/*/*/src/bin.ts',
         'packages/*/*/src/dsh-trace.ts',
+        'packages/*/*/src/dsh-graph.ts',
         // Re-export barrel with no logic of its own.
         'packages/*/*/src/index.ts',
       ],

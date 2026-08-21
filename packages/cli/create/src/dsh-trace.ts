@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * `dsh-trace <package>…` — print where each installed dsh dependency's contract
- * can be read: its emitted declarations, its README, and its upstream source
- * URL for the installed release. Run from a project that has them installed.
+ * can be read: its emitted declarations, its README, its upstream source URL for
+ * the installed release, and the local source snapshot when `dsh-graph` has
+ * fetched one. Run from a project that has them installed.
  *
  * This file and its `./trace.ts` sibling are copied into every generated project
  * under `scripts/`, so a project can trace its own dependencies without
@@ -10,7 +11,8 @@
  * @module @rdmu/create-dsh-plugin/dsh-trace
  */
 
-import { formatTrace, tracePackage } from './trace.ts'
+import { localSnapshotOf, resolutionRoots, traceFromRoots } from './dsh-source.ts'
+import { formatTrace } from './trace.ts'
 
 const names = process.argv.slice(2)
 if (names.length === 0) {
@@ -22,9 +24,15 @@ if (names.length === 0) {
 }
 
 let failed = false
+const roots = resolutionRoots(process.cwd())
 for (const name of names) {
   try {
-    process.stdout.write(`${formatTrace(tracePackage(name))}\n`)
+    // Resolved from the packages that declare dsh, not just the working directory:
+    // dsh packages are a plugin's peers, and the workspace root only sees them
+    // when pnpm happens to expose them through NODE_PATH.
+    const trace = traceFromRoots(name, roots)
+    const snapshot = localSnapshotOf(trace, process.cwd())
+    process.stdout.write(`${formatTrace(snapshot === undefined ? trace : { ...trace, localSource: snapshot })}\n`)
   } catch (error) {
     process.stderr.write(`${(error as Error).message}\n`)
     failed = true

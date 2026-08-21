@@ -4,3 +4,10 @@ lib/
 coverage/
 .DS_Store
 *.tgz
+
+# The dsh source snapshot and the code graphs over it. Both are rebuilt from one
+# immutable release tag by `pnpm run dsh:graph`, so the recipe is what ships:
+# `.codegraph/` is a machine-local SQLite index, and the snapshot is upstream's
+# code, not this project's.
+.dsh-source/
+.codegraph/

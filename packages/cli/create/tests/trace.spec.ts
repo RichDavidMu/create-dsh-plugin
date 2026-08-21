@@ -7,7 +7,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { formatTrace, sourceUrlFor, tracePackage } from '../src/trace.ts'
+import { formatTrace, cloneRemoteFor, sourceUrlFor, tracePackage } from '../src/trace.ts'
 
 describe('sourceUrlFor', () => {
   it('builds a tree URL at the release tag from git+https metadata', () => {
@@ -25,6 +25,25 @@ describe('sourceUrlFor', () => {
 
   it('declines a non-GitHub remote rather than guessing a URL layout', () => {
     expect(sourceUrlFor('https://gitlab.com/a/b.git', 'packages/x', '1.0.0')).toBeUndefined()
+  })
+})
+
+describe('cloneRemoteFor', () => {
+  it('returns the https clone remote whatever form the manifest declared', () => {
+    expect(cloneRemoteFor('git@github.com:deepseek-ai/deepseek-harness.git'))
+      .toBe('https://github.com/deepseek-ai/deepseek-harness.git')
+  })
+
+  it('keeps a dot inside a repository name, which a clone target cannot afford to lose', () => {
+    expect(cloneRemoteFor('git+https://github.com/owner/some.repo.git')).toBe('https://github.com/owner/some.repo.git')
+  })
+
+  it('accepts a remote with no .git suffix', () => {
+    expect(cloneRemoteFor('https://github.com/owner/repo')).toBe('https://github.com/owner/repo.git')
+  })
+
+  it('declines a non-GitHub remote, leaving the caller to say so', () => {
+    expect(cloneRemoteFor('https://gitlab.com/a/b.git')).toBeUndefined()
   })
 })
 
@@ -93,5 +112,18 @@ describe('formatTrace', () => {
       name: 'x', version: '1.0.0', directory: '/tmp/x', declarations: [], readmes: [],
     })
     expect(report).toContain('no lib/types/*.d.ts found')
+    expect(report).not.toContain('snapshot')
+  })
+
+  it('points at a fetched source snapshot when the project has one', () => {
+    const report = formatTrace({
+      name: 'x',
+      version: '1.0.0',
+      directory: '/tmp/x',
+      declarations: [],
+      readmes: [],
+      localSource: '/project/.dsh-source/dsh-v1.0.0',
+    })
+    expect(report).toContain('snapshot       /project/.dsh-source/dsh-v1.0.0')
   })
 })

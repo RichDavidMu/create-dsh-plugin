@@ -6,7 +6,8 @@
   "type": "module",
   "bin": {
     "create-dsh-plugin": "./lib/bin.js",
-    "dsh-trace": "./lib/dsh-trace.js"
+    "dsh-trace": "./lib/dsh-trace.js",
+    "dsh-graph": "./lib/dsh-graph.js"
   },
   "exports": {
     ".": {

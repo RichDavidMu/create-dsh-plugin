@@ -15,7 +15,24 @@ export {
   type TemplateRoots,
 } from './scaffold.ts'
 export { materialize, materializeFiles, rewriteManifest, snakeCase, substitute, targetName, TEMPLATE_ROLE, TEMPLATE_SCOPE, TEMPLATE_TOOL, type Naming } from './copy.ts'
-export { formatTrace, sourceUrlFor, tracePackage, type PackageTrace } from './trace.ts'
+export { cloneRemoteFor, formatTrace, releaseTag, sourceUrlFor, tracePackage, type PackageTrace } from './trace.ts'
+export {
+  cloneArgs,
+  formatPlan,
+  indexArgs,
+  localSnapshotOf,
+  planGraph,
+  resolutionRoots,
+  snapshotFor,
+  traceFromRoots,
+  traceReference,
+  GRAPH_DIR,
+  REFERENCE_PACKAGES,
+  SOURCE_ROOT,
+  type GraphPlan,
+  type SourceSnapshot,
+} from './dsh-source.ts'
+export { quoteForShell, runGraph, type GraphIo } from './graph-runner.ts'
 export {
   dshRange,
   scaffoldVersion,

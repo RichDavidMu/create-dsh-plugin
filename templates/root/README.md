@@ -60,16 +60,36 @@ actually want, and keep the shape.
 its own module so it stays unit-testable without booting a Context. That split is
 worth preserving.
 
+## Reading dsh itself
+
+`pnpm install` fetches the pinned dsh release's full source into `.dsh-source/`
+and indexes it with [codegraph](https://github.com/colbymchenry/codegraph), so the
+questions the guides do not answer — how a service actually works, what calls what
+— are answerable here instead of by guessing:
+
+```sh
+codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v<version>
+pnpm run dsh:graph      # rebuild; --dry-run shows what it would do, --force refetches
+pnpm run trace <pkg>    # every route to one package's contract
+```
+
+An agent gets this through the codegraph MCP server that `.mcp.json` wires up.
+Neither the source nor the index is committed — one immutable tag rebuilds both —
+and neither is required: the first fetch needs `git`, a network, and the CLI
+(`npm i -g @colbymchenry/codegraph`). Without them `pnpm install` still succeeds
+and says so, and `DSH_GRAPH=0 pnpm install` skips the step outright.
+[docs/tracing-dsh.md](docs/tracing-dsh.md) has the details.
+
 ## Documentation
 
 - [docs/plugin-authoring.md](docs/plugin-authoring.md) — how to write a dsh
-  plugin. Self-contained; no dsh checkout required.
+  plugin: the common path in full, and where it stops.
 - [docs/cordis-essentials.md](docs/cordis-essentials.md) — Context, fibers,
   services, effects, and the waterfall `next()` obligation.
 - [docs/loading-into-dsh.md](docs/loading-into-dsh.md) — getting the plugin to run
   inside a real profile.
-- [docs/tracing-dsh.md](docs/tracing-dsh.md) — reading the authoritative contract
-  of any dsh service from the installed dependency.
+- [docs/tracing-dsh.md](docs/tracing-dsh.md) — reading dsh itself: the source graph
+  for implementation, the installed declarations for contract.
 - [AGENTS.md](AGENTS.md) — the conventions an agent working in this repository
   must follow.
 

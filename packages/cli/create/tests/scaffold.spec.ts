@@ -91,9 +91,16 @@ describe('scaffold', () => {
       'vitest.config.ts',
       'tsdown.config.ts',
       'lefthook.yml',
+      '.mcp.json',
+      '.claude/settings.json',
+      '.claude/skills/dsh-source/SKILL.md',
       'scripts/install-lefthook.mjs',
+      'scripts/postinstall.mjs',
       'scripts/trace.ts',
       'scripts/dsh-trace.ts',
+      'scripts/dsh-source.ts',
+      'scripts/graph-runner.ts',
+      'scripts/dsh-graph.ts',
       'docs/plugin-authoring.md',
       'packages/plugin/hello/src/index.ts',
       'packages/plugin/hello/src/invariant.ts',
@@ -154,6 +161,22 @@ describe('scaffold', () => {
       readFileSync(join(result.directory, 'packages/plugin/hello/package.json'), 'utf8'),
     ) as { version: string }
     expect(manifest.version).toBe('0.0.0')
+  })
+
+  it('keeps the fetched dsh source and both code graphs out of git', () => {
+    const result = scaffold(request(), workspace)
+    const ignored = readFileSync(join(result.directory, '.gitignore'), 'utf8')
+    expect(ignored).toContain('.dsh-source/')
+    expect(ignored).toContain('.codegraph/')
+  })
+
+  it('wires the codegraph MCP server, so an agent can query those graphs unprompted', () => {
+    const result = scaffold(request(), workspace)
+    const config = JSON.parse(readFileSync(join(result.directory, '.mcp.json'), 'utf8')) as {
+      mcpServers: Record<string, { command: string; args: string[] }>
+    }
+    expect(config.mcpServers.codegraph?.command).toBe('codegraph')
+    expect(config.mcpServers.codegraph?.args).toEqual(['serve', '--mcp'])
   })
 
   it('refuses a target that already holds files', () => {

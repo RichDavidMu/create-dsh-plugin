@@ -22,6 +22,7 @@
     "scaffold:smoke": "tsx scripts/scaffold-smoke.ts",
     "verify-releasable": "tsx scripts/verify-releasable.ts",
     "trace": "tsx packages/cli/create/src/dsh-trace.ts",
+    "dsh:graph": "tsx packages/cli/create/src/dsh-graph.ts",
     "postinstall": "node scripts/install-lefthook.mjs"
   },
   "devDependencies": {

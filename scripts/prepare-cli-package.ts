@@ -45,10 +45,11 @@ cpSync(join(repoRoot, 'packages', 'example', 'plugin-hello'), join(templateOut, 
   filter: source => !source.includes('node_modules') && !source.includes(join('plugin-hello', 'lib')),
 })
 
-// The tracing tool ships as source because a generated project receives it as its
-// own `scripts/` files rather than as a dependency on this package.
+// The tracing and source-graph tools ship as source because a generated project
+// receives them as its own `scripts/` files rather than as a dependency on this
+// package.
 mkdirSync(join(templateOut, 'tools'), { recursive: true })
-for (const file of ['trace.ts', 'dsh-trace.ts']) {
+for (const file of ['trace.ts', 'dsh-trace.ts', 'dsh-source.ts', 'graph-runner.ts', 'dsh-graph.ts']) {
   cpSync(join(packageRoot, 'src', file), join(templateOut, 'tools', file))
 }
 

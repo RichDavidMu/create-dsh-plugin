@@ -80,6 +80,7 @@ pnpm run check           # typecheck + lint + test + build
 pnpm run test:coverage   # per-file 100%; every `v8 ignore` states why
 pnpm run scaffold:smoke  # THE release gate — see below
 pnpm run trace <pkg>     # where an installed dsh package's contract can be read
+pnpm run dsh:graph       # fetch the pinned dsh source and index it (see below)
 ```
 
 ### `scaffold:smoke` is not optional before a release
@@ -106,6 +107,9 @@ packages, and this repository is the reference for what those rules are.
 - Per-file 100% coverage. Each `/* v8 ignore */` names why the branch is
   unreachable — an unexplained one is a bug, not a waiver.
 - Tests describe behavior. When behavior should change, change the test with it.
+- Docs state the common path and name their edge. Where a guide stops it points at
+  `docs/tracing-dsh.md`, because a generated project's audience is an agent that
+  would otherwise invent a dsh API.
 
 ### Template-specific rules
 
@@ -120,6 +124,43 @@ packages, and this repository is the reference for what those rules are.
 - **Bundle packages ship no JavaScript.** They are excluded from the generated
   `tsdown.config.ts` workspace glob; tsdown fails on a package whose entry glob
   matches nothing.
+
+## The dsh source graph
+
+A generated project fetches its pinned dsh release's full source into
+`.dsh-source/dsh-v<version>/` and indexes it with
+[codegraph](https://github.com/colbymchenry/codegraph), from `postinstall`, so an
+agent can read implementation instead of guessing it. Three rules keep that
+defensible:
+
+- **Neither the snapshot nor any `.codegraph/` is ever committed** — here or in a
+  generated project. Remote and tag are derived from the installed manifest
+  (`src/dsh-source.ts`), so the recipe reproduces the artifact exactly; the index
+  alone is ~256 MB of machine-local SQLite.
+- **The step may never fail an install, and may never hang one.**
+  `templates/root/scripts/postinstall.mjs` spawns and forgives; `dsh-graph.ts`
+  exits 0 under `--quiet` whatever went wrong, disables git's credential prompts,
+  and caps each step with a timeout — an invisible prompt on /dev/tty would
+  otherwise block `pnpm install` forever. No `git`, no network, no `codegraph`
+  binary, and a `--prod` install without `tsx` are all expected states, each with
+  a printed reason.
+- **A snapshot counts as fetched only once a marker says so.** `git clone` creates
+  `.git` before it checks anything out and keeps it on failure, so a killed
+  `postinstall` would otherwise leave a partial tree that every later run treats
+  as complete and indexes forever.
+- **`DSH_GRAPH=0` is the CI contract, and `--dry-run` outranks it.** A dry run has
+  to work with the graph disabled, or `scaffold:smoke`'s assertion that the remote
+  and tag resolve offline would silently stop asserting. Never let the release gate
+  clone anything.
+
+The split across three files is the coverage boundary: `dsh-source.ts` decides,
+`graph-runner.ts` sequences against an injected `GraphIo`, and `dsh-graph.ts` is
+argv plus real `node:` calls. Only the last is excluded from coverage; anything in
+it that deserves a test belongs in one of the other two.
+
+This repository carries the `dsh:graph` script but deliberately **no** postinstall
+hook for it: a maintainer installing here is not the audience for a dsh source
+graph, and slowing every install would be a bad trade.
 
 ## Dependencies
 
