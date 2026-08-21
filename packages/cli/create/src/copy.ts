@@ -13,7 +13,7 @@
  *   world" — which is what makes `\bhello\b` safe. `tests/no-residue.spec.ts`
  *   pins that property by generating with a renamed plugin and asserting no
  *   template token survives.
- * @module create-dsh-plugin/copy
+ * @module @rdmu/create-dsh-plugin/copy
  */
 
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'

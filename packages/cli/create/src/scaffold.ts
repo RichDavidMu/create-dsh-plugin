@@ -6,7 +6,7 @@
  * `tsconfig.base.json` plus per-package project references, one aggregate
  * solution) so a plugin developed there can be read, reviewed, and eventually
  * upstreamed without restructuring.
- * @module create-dsh-plugin/scaffold
+ * @module @rdmu/create-dsh-plugin/scaffold
  */
 
 import { spawnSync } from 'node:child_process'

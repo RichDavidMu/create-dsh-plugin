@@ -17,7 +17,7 @@
  * The published tarball does NOT contain `src/`, despite `exports` declaring a
  * `./src/*` subpath: that entry serves workspace consumers inside
  * deepseek-harness. Route 3 is how you reach source.
- * @module create-dsh-plugin/trace
+ * @module @rdmu/create-dsh-plugin/trace
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'

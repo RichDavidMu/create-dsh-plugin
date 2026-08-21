@@ -17,9 +17,10 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "hygiene": "pnpm run publint",
-    "publint": "pnpm --filter create-dsh-plugin exec publint",
+    "publint": "pnpm --filter ./packages/cli/create exec publint",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "scaffold:smoke": "tsx scripts/scaffold-smoke.ts",
+    "verify-releasable": "tsx scripts/verify-releasable.ts",
     "trace": "tsx packages/cli/create/src/dsh-trace.ts",
     "postinstall": "node scripts/install-lefthook.mjs"
   },

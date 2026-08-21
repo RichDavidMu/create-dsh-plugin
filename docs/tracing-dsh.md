@@ -107,7 +107,7 @@ before publishing.
 
 ## Version alignment
 
-`create-dsh-plugin` releases in lockstep with dsh: the scaffold version IS the
+`@rdmu/create-dsh-plugin` releases in lockstep with dsh: the scaffold version IS the
 dsh version a generated project depends on, and every `@deepseek-ai/dsh-*`
 dependency is pinned **exactly** rather than with a caret.
 
@@ -116,6 +116,6 @@ caret would let a project silently install a dsh its scaffold was never tested
 against. dsh packages are cut as one set and are not independently compatible.
 
 To target a different dsh release, generate with that scaffold release —
-`pnpm create dsh-plugin@0.1.0-rc.8 my-plugin` — rather than editing ranges by
+`pnpm create @rdmu/dsh-plugin@0.1.0-rc.8 my-plugin` — rather than editing ranges by
 hand. To upgrade an existing project, bump every `@deepseek-ai/dsh-*` version
 together, then run `pnpm run check` before trusting it.

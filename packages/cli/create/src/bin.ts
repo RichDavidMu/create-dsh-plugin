@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * `create-dsh-plugin` entry point.
- * @module create-dsh-plugin/bin
+ * @module @rdmu/create-dsh-plugin/bin
  */
 
 import { parseArgs } from './args.ts'

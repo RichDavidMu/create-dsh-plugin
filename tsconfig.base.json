@@ -29,7 +29,7 @@
     "noUnusedParameters": true,
     "types": ["node"],
     "paths": {
-      "create-dsh-plugin": ["./packages/cli/create/src/index.ts"],
+      "@rdmu/create-dsh-plugin": ["./packages/cli/create/src/index.ts"],
       "@example/dsh-plugin-hello": ["./packages/example/plugin-hello/src/index.ts"],
       "@example/dsh-plugin-hello/invariant": ["./packages/example/plugin-hello/src/invariant.ts"]
     }

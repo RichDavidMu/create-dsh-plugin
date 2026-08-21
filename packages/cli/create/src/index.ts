@@ -1,8 +1,8 @@
 /**
- * Programmatic surface of `create-dsh-plugin`, for callers that generate a
+ * Programmatic surface of `@rdmu/create-dsh-plugin`, for callers that generate a
  * project from code rather than the command line (a test harness, a higher-level
  * template, an internal platform tool).
- * @module create-dsh-plugin
+ * @module @rdmu/create-dsh-plugin
  */
 
 export { parseArgs, validatePluginName, validateScope, type ScaffoldRequest } from './args.ts'

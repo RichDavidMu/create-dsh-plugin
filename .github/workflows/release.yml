@@ -1,0 +1,119 @@
+name: Release
+
+# One button: run the full gate, then publish to npm.
+#
+# The version comes from the manifests, not from an input — this scaffold's
+# version IS the dsh version it targets, so choosing it at release time would
+# create a second source of truth. Bump the three manifests in a commit, then run
+# this workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run every gate and pack the tarball, but do not publish'
+        type: boolean
+        default: false
+      tag:
+        description: 'npm dist-tag (use "next" for a prerelease, "latest" for a stable release)'
+        type: string
+        default: next
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: publish to npm
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      # Pushing the release tag.
+      contents: write
+      # npm provenance: attests that this tarball was built by this workflow from
+      # this commit, verifiable on the package page.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: pnpm
+          # Writes the .npmrc `//registry.npmjs.org/:_authToken` line that
+          # `pnpm publish` reads from NODE_AUTH_TOKEN below.
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      # Cheapest failure first: a duplicate version or a manifest that disagrees
+      # with its siblings is caught before any minutes are spent on checks.
+      - name: verify releasable
+        run: pnpm run verify-releasable
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: check
+        run: pnpm run check
+
+      - name: test with coverage
+        run: pnpm run test:coverage
+
+      # The published-layout gate. Releasing without this is how a stale `lib/` or
+      # a missing `files` entry reaches users.
+      - name: scaffold smoke (published layout)
+        run: pnpm run scaffold:smoke
+
+      - name: read package identity
+        id: version
+        run: |
+          echo "value=$(node -p "require('./packages/cli/create/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "name=$(node -p "require('./packages/cli/create/package.json').name")" >> "$GITHUB_OUTPUT"
+
+      - name: pack (dry run)
+        if: inputs.dry_run
+        run: pnpm --filter ./packages/cli/create pack --pack-destination "$RUNNER_TEMP"
+
+      - name: publish
+        if: ${{ !inputs.dry_run }}
+        # Filtered by PATH, not by package name, so renaming the package needs no
+        # change here. `--access public` is a no-op for an unscoped name and
+        # required for a scoped one, so it is stated unconditionally.
+        run: pnpm --filter ./packages/cli/create publish --access public --provenance --tag "${{ inputs.tag }}" --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: tag the release
+        if: ${{ !inputs.dry_run }}
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          PACKAGE: ${{ steps.version.outputs.name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "$PACKAGE v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: summary
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          PACKAGE: ${{ steps.version.outputs.name }}
+        run: |
+          # `npm create` drops the `create-` segment: @rdmu/create-dsh-plugin is
+          # invoked as `pnpm create @rdmu/dsh-plugin`.
+          INVOCATION="${PACKAGE/create-/}"
+          {
+            echo "## $PACKAGE v$VERSION"
+            echo
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Dry run: every gate passed and the tarball packed. Nothing was published."
+            else
+              echo "Published to npm under dist-tag \`${{ inputs.tag }}\`, tagged \`v$VERSION\`."
+              echo
+              echo '```sh'
+              echo "pnpm create $INVOCATION@$VERSION my-plugin"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,17 +1,17 @@
 /**
  * The version contract of this scaffold.
  *
- * `create-dsh-plugin` releases in lockstep with DeepSeek Harness: this
+ * `@rdmu/create-dsh-plugin` releases in lockstep with DeepSeek Harness: this
  * package's own version IS the dsh version a generated project depends on.
  * There is no `--dsh-version` flag — a person who wants a different dsh picks a
- * different scaffold release (`pnpm create dsh-plugin@0.1.0-rc.8 …`). One
+ * different scaffold release (`pnpm create @rdmu/dsh-plugin@0.1.0-rc.8 …`). One
  * version, one answer, nothing to keep in sync at generation time.
  *
  * Framework packages version independently of dsh (Cordis is on its own 4.x
  * line), so their ranges cannot be derived from this package's version and are
  * pinned here instead. Each range is the one the targeted dsh release declares
  * as its own peer or direct dependency.
- * @module create-dsh-plugin/versions
+ * @module @rdmu/create-dsh-plugin/versions
  */
 
 import { readFileSync } from 'node:fs'

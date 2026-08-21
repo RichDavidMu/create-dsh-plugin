@@ -42,7 +42,8 @@ mkdirSync(smokeRoot, { recursive: true })
 run('pnpm', ['run', 'build'], repoRoot)
 
 // 2. Pack the scaffold, which runs `prepack` and therefore assembles template/.
-run('pnpm', ['--filter', 'create-dsh-plugin', 'pack', '--pack-destination', smokeRoot], repoRoot)
+//    Filtered by path, not by package name, so a rename needs no change here.
+run('pnpm', ['--filter', './packages/cli/create', 'pack', '--pack-destination', smokeRoot], repoRoot)
 const tarball = readdirSync(smokeRoot).find(entry => entry.endsWith('.tgz'))
 if (tarball === undefined) throw new Error(`scaffold-smoke: no tarball landed in ${smokeRoot}`)
 

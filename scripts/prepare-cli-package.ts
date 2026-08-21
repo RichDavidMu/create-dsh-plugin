@@ -1,5 +1,5 @@
 /**
- * Assemble the publishable `create-dsh-plugin` tarball.
+ * Assemble the publishable `@rdmu/create-dsh-plugin` tarball.
  *
  * A source checkout keeps the template split across three places for good
  * reasons: `packages/example/plugin-hello` is a real workspace package so this

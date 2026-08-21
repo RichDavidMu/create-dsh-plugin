@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`create-dsh-plugin` — the scaffold that generates DeepSeek Harness plugin
+`@rdmu/create-dsh-plugin` — the scaffold that generates DeepSeek Harness plugin
 projects. Read [README.md](README.md) for what it does; this file is how to work
 on it.
 
@@ -21,11 +21,31 @@ Releasing a new dsh version means bumping all three, updating
 `FRAMEWORK_VERSIONS` in `packages/cli/create/src/versions.ts` if Cordis or
 schemastery moved, reinstalling, and running `pnpm run scaffold:smoke`.
 
+## Releasing
+
+`pnpm run verify-releasable` is the local preflight; the same script runs first in
+CI so a duplicate version or an unownable name fails in seconds rather than after
+the smoke test. `.github/workflows/release.yml` is the one button
+(`workflow_dispatch`, with a `dry_run` input) and runs, in order:
+verify-releasable → check → coverage → scaffold:smoke → `pnpm publish
+--provenance` → tag.
+
+The npm name is `@rdmu/create-dsh-plugin`; the unscoped `create-dsh-plugin` was
+already taken on npm by an unrelated account. The **bin** stays
+`create-dsh-plugin`, which is what makes `pnpm create @rdmu/dsh-plugin` work —
+`npm create` drops the `create-` segment when resolving the package name.
+
+Both workflows filter the package **by path** (`--filter ./packages/cli/create`),
+never by name, so a future rename touches only manifests and prose.
+
+Publishing needs the `NPM_TOKEN` repository secret. Everything else in the release
+path is reproducible from a clean checkout.
+
 ## Layout, and why the template is split
 
 ```
 packages/
-  cli/create/              the scaffold CLI (published as `create-dsh-plugin`)
+  cli/create/              the scaffold CLI (published as `@rdmu/create-dsh-plugin`)
   example/plugin-hello/     the example plugin — a REAL workspace package
 templates/
   root/                    generated-project root files

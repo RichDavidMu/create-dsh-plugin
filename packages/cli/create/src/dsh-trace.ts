@@ -7,7 +7,7 @@
  * This file and its `./trace.ts` sibling are copied into every generated project
  * under `scripts/`, so a project can trace its own dependencies without
  * depending on this scaffold.
- * @module create-dsh-plugin/dsh-trace
+ * @module @rdmu/create-dsh-plugin/dsh-trace
  */
 
 import { formatTrace, tracePackage } from './trace.ts'

@@ -11,7 +11,7 @@
   // with `tsc -p`, never referenced.
   //
   // `scripts/` is absent on purpose: those files arrive already checked from
-  // `create-dsh-plugin`.
+  // `@rdmu/create-dsh-plugin`.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
