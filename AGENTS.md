@@ -4,6 +4,13 @@
 projects. Read [README.md](README.md) for what it does; this file is how to work
 on it.
 
+Four READMEs, two documents: the repository root carries `README.md` and
+`README.zh.md`, and `packages/cli/create/` carries a copy of each because npm
+publishes the package's own directory. The copies are the root files minus the
+`Contributing` / `参与开发` section — change one, mirror it, and keep the Chinese
+in step with the English. `files` in the CLI manifest lists both, following the
+dsh convention that a tarball ships English and Chinese side by side.
+
 ## The one contract that governs everything
 
 **This package's version IS the dsh version generated projects depend on, plus a

@@ -1,9 +1,34 @@
 # @rdmu/create-dsh-plugin
 
+[简体中文](README.zh.md)
+
 Scaffold a [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 plugin project — a working plugin with one model-facing tool, a profile bundle
-that mounts it, dsh's own toolchain, and documentation an agent can follow without
-reading dsh's source.
+that mounts it, dsh's own toolchain, and everything an agent needs to answer dsh
+questions from dsh itself.
+
+## What makes it different
+
+- **The version is the contract.** `@rdmu/create-dsh-plugin@0.1.1-rc.2.rev.1`
+  generates a project pinned to `@deepseek-ai/dsh-*@0.1.1-rc.2` — exactly, no
+  caret. There is no `--dsh-version` flag, because one fact should not have two
+  sources of truth.
+- **The generated project reads dsh instead of guessing at it.** `pnpm install`
+  fetches that release's full source at its immutable tag and indexes it as a code
+  graph; `.mcp.json` and a `dsh-source` skill wire it to whichever agent opens the
+  project. The guides cover the common path and say where they stop.
+- **It is a working plugin, not a placeholder.** A typed tool with a canonical
+  output value, a prompt section, an invariant companion, and tests that mount the
+  real dsh services and assert the registration is withdrawn on disposal.
+- **dsh's own toolchain, unchanged.** oxlint (type-aware), tsc project references,
+  tsdown, and vitest with a per-file 100% coverage floor — so a plugin developed
+  here already meets the standard dsh holds its own packages to.
+- **Two shapes, one template.** One flat package by default; `--layout workspace`
+  when the project will hold more than one. The same code either way.
+- **What you install is verified end to end.** The release gate packs a real
+  tarball, installs it, generates from the published layout in both shapes, and
+  runs each generated project's own `check` — so a missing `files` entry or a stale
+  `lib/` fails here rather than on your machine.
 
 ## Usage
 
