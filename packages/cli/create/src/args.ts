@@ -61,7 +61,7 @@ Examples:
   pnpm create @rdmu/dsh-plugin my-plugin                     scaffold into ./my-plugin
   pnpm create @rdmu/dsh-plugin my-plugin --plugin word-count name the example plugin word-count
   pnpm create @rdmu/dsh-plugin my-plugin --scope @acme        publish generated packages under @acme
-  pnpm create @rdmu/dsh-plugin@0.1.0-rc.8 my-plugin          target a different dsh release
+  pnpm create @rdmu/dsh-plugin@0.1.0-rc.9 my-plugin          target a different dsh release
 
 The scaffold version IS the dsh version generated projects depend on; there is
 no flag to choose one separately.

@@ -46,15 +46,15 @@ yours, not as a template you have to find-and-replace.
 
 ## The version is the contract
 
-**This package's version IS the dsh version it targets.** `@rdmu/create-dsh-plugin@0.1.0-rc.7`
-generates a project pinned to `@deepseek-ai/dsh-*@0.1.0-rc.7` — exactly, no caret.
+**This package's version IS the dsh version it targets.** `@rdmu/create-dsh-plugin@0.1.0-rc.8`
+generates a project pinned to `@deepseek-ai/dsh-*@0.1.0-rc.8` — exactly, no caret.
 There is no `--dsh-version` flag, because that would be a second source of truth
 for one fact.
 
 To target a different dsh release, pick that scaffold release:
 
 ```sh
-npm create @rdmu/dsh-plugin@0.1.0-rc.8 my-plugin
+npm create @rdmu/dsh-plugin@0.1.0-rc.9 my-plugin
 ```
 
 dsh packages are cut as one set and are not independently compatible, so an exact
@@ -135,7 +135,7 @@ queries it through the codegraph MCP server the generated `.mcp.json` wires up, 
 a person through the CLI:
 
 ```sh
-codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v0.1.0-rc.7
+codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v0.1.0-rc.8
 pnpm run dsh:graph --dry-run   # what it would fetch and index, offline
 ```
 
@@ -152,14 +152,14 @@ dsh-trace @deepseek-ai/dsh-tools
 ```
 
 ```
-@deepseek-ai/dsh-tools@0.1.0-rc.7
+@deepseek-ai/dsh-tools@0.1.0-rc.8
   installed at   .../node_modules/@deepseek-ai/dsh-tools
   contract       10 declaration file(s) — the JSDoc here IS the contract:
                  .../lib/types/index.d.ts
                  ...
   README         .../README.md
-  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.0-rc.7/packages/core/tools
-  snapshot       .../.dsh-source/dsh-v0.1.0-rc.7
+  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.0-rc.8/packages/core/tools
+  snapshot       .../.dsh-source/dsh-v0.1.0-rc.8
 ```
 
 The published `.d.ts` files keep every JSDoc block — including `@mode` on events,
