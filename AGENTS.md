@@ -10,7 +10,7 @@ on it.
 `.rev.N` suffix naming which of our releases against that dsh it is.**
 
 ```
-0.1.1-rc.1.rev.2   →  generated projects pin @deepseek-ai/dsh-*@0.1.1-rc.1
+0.1.1-rc.2.rev.2   →  generated projects pin @deepseek-ai/dsh-*@0.1.1-rc.2
 └── dsh ──┘ └─┬─┘
              our second release targeting it
 ```
