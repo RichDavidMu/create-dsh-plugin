@@ -1,9 +1,9 @@
 /**
  * File materialization for the scaffold: recursive copy with name and token
- * substitution, plus manifest rewriting.
+ * substitution, manifest rewriting, layout flattening, and layout-specific
+ * documentation passages.
  *
- * Two substitution mechanisms, chosen per file kind rather than applied
- * uniformly:
+ * Four mechanisms, chosen per kind of difference rather than applied uniformly:
  *
  * - **Manifests** (`package.json`) are parsed, edited, and re-serialized. A
  *   dependency range is data, not text, so a textual replace could silently
@@ -13,11 +13,18 @@
  *   world" — which is what makes `\bhello\b` safe. `tests/no-residue.spec.ts`
  *   pins that property by generating with a renamed plugin and asserting no
  *   template token survives.
+ * - **The `single` layout is derived by path rewriting.** Templates are written
+ *   in the workspace shape, which is the shape this repository itself has, so
+ *   they stay honest and reviewable; {@link layoutRewrites} flattens them.
+ * - **Passages that genuinely differ by layout** are pulled in from per-layout
+ *   fragments, so one document serves both layouts rather than two documents
+ *   drifting apart. See {@link resolveIncludes}.
  * @module @rdmu/create-dsh-plugin/copy
  */
 
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import type { LayoutMode } from './args.ts'
 
 /** The role name the template checked into this repository uses. */
 export const TEMPLATE_ROLE = 'hello'
@@ -34,6 +41,42 @@ export interface Naming {
   readonly role: string
   /** Target scope prefix including `@` and trailing `/`, or the empty string when unscoped. */
   readonly scopePrefix: string
+  /** The project's shape, which decides whether template paths are flattened. */
+  readonly layout: LayoutMode
+}
+
+/**
+ * Ordered path rewrites that flatten the workspace layout into a single package.
+ *
+ * Longest path first, and the trailing-slash form before the bare form, so
+ * `packages/plugin/hello/src/index.ts` becomes `src/index.ts` rather than
+ * `./src/index.ts`.
+ *
+ * The two relative-depth rules are stated as whole paths rather than as a blanket
+ * `../../../` rewrite on purpose: `.claude/skills/dsh-source/SKILL.md` links three
+ * levels up to the project root from a directory that does not move between
+ * layouts, and a blanket rule would break exactly that link.
+ * @param naming - the target names, which decide the workspace paths being flattened.
+ * @returns `[from, to]` pairs to apply in order.
+ */
+export function layoutRewrites(naming: Naming): readonly (readonly [string, string])[] {
+  const plugin = `packages/plugin/${naming.role}`
+  const bundle = `packages/bundle/${naming.role}-bundle`
+  return [
+    // A workspace member list, not a path: in the single layout the root itself is
+    // the plugin, and `bundle` is the only additional member pnpm has to be told
+    // about. This has to run before the path rules below, which would otherwise
+    // turn the glob into `.`.
+    ['packages:\n  - packages/*/*', 'packages:\n  - bundle'],
+    [`${plugin}/`, ''],
+    [plugin, '.'],
+    [`${bundle}/`, 'bundle/'],
+    [bundle, 'bundle'],
+    ['packages/*/*/', ''],
+    ['packages/*/*', '.'],
+    ['../../../../tsconfig.tests.json', '../tsconfig.tests.json'],
+    ['../../../docs/loading-into-dsh.md', '../docs/loading-into-dsh.md'],
+  ]
 }
 
 /**
@@ -61,16 +104,57 @@ export function snakeCase(role: string): string {
  * being mistaken for an identifier, and every lowercase `hello` in the template
  * genuinely names this plugin, which is what makes step 3 correct rather than
  * merely convenient.
+ *
+ * The `single` layout then flattens every workspace path; see
+ * {@link layoutRewrites}.
  * @param text - the template file's contents.
  * @param naming - the target names.
  * @returns the substituted text.
  */
+/**
+ * Apply the role rename: the tool name first, then the bare role inside it.
+ * @param text - text with the scope already substituted.
+ * @param role - the target role name in kebab-case.
+ * @returns the text with both tokens renamed.
+ */
+function renameRole(text: string, role: string): string {
+  return text
+    .replace(new RegExp(`\\b${TEMPLATE_TOOL}\\b`, 'g'), `${snakeCase(role)}_greet`)
+    .replace(new RegExp(`\\b${TEMPLATE_ROLE}\\b`, 'g'), role)
+}
+
 export function substitute(text: string, naming: Naming): string {
   const withScope = text.replaceAll(TEMPLATE_SCOPE, naming.scopePrefix)
-  if (naming.role === TEMPLATE_ROLE) return withScope
-  return withScope
-    .replace(new RegExp(`\\b${TEMPLATE_TOOL}\\b`, 'g'), `${snakeCase(naming.role)}_greet`)
-    .replace(new RegExp(`\\b${TEMPLATE_ROLE}\\b`, 'g'), naming.role)
+  const named = naming.role === TEMPLATE_ROLE ? withScope : renameRole(withScope, naming.role)
+  if (naming.layout === 'workspace') return named
+  let flattened = named
+  for (const [from, to] of layoutRewrites(naming)) flattened = flattened.replaceAll(from, to)
+  return flattened
+}
+
+/** A `<!-- include: name -->` line, which a layout fragment replaces wholesale. */
+const INCLUDE_MARKER = /^[ \t]*<!-- include: ([\w.-]+) -->[ \t]*$/gm
+
+/**
+ * Replace every `<!-- include: <name> -->` line with the layout's fragment.
+ *
+ * Three passages differ by layout — the directory tree, the recipe for adding a
+ * package, and where tests live — while the other hundred-odd lines of AGENTS.md
+ * and README.md must not. Two full copies per document is how those hundred lines
+ * drift, so the documents stay single copies and only the passages are per-layout.
+ * @param text - the template text, before naming substitution — the caller substitutes the assembled document.
+ * @param fragments - directory holding one file per include name.
+ * @returns the text with every marker replaced by its fragment, without its trailing newline.
+ * @throws Error when a marker names a fragment the layout does not provide.
+ */
+export function resolveIncludes(text: string, fragments: string): string {
+  return text.replace(INCLUDE_MARKER, (_line, name: string) => {
+    const file = join(fragments, name)
+    if (!existsSync(file)) {
+      throw new Error(`create-dsh-plugin: template asks for include ${name}, which ${fragments} does not provide`)
+    }
+    return readFileSync(file, 'utf8').replace(/\n$/, '')
+  })
 }
 
 /**
@@ -153,9 +237,16 @@ export function materializeFiles(from: string, to: string, names: readonly strin
  * @param to - the target directory, created if absent.
  * @param naming - the target names.
  * @param dshRange - the range every `@deepseek-ai/dsh-*` dependency takes.
+ * @param fragments - directory of layout fragments; omit for trees that carry no include markers.
  * @returns the absolute paths written, in traversal order.
  */
-export function materialize(from: string, to: string, naming: Naming, dshRange: string): string[] {
+export function materialize(
+  from: string,
+  to: string,
+  naming: Naming,
+  dshRange: string,
+  fragments?: string,
+): string[] {
   mkdirSync(to, { recursive: true })
   const written: string[] = []
   for (const entry of readdirSync(from).sort()) {
@@ -163,13 +254,20 @@ export function materialize(from: string, to: string, naming: Naming, dshRange: 
     const target = join(to, substitute(targetName(entry), naming))
     if (statSync(source).isDirectory()) {
       if (entry === 'node_modules' || entry === 'lib') continue
-      written.push(...materialize(source, target, naming, dshRange))
+      written.push(...materialize(source, target, naming, dshRange, fragments))
       continue
     }
     const text = readFileSync(source, 'utf8')
-    const output = targetName(entry) === 'package.json'
-      ? rewriteManifest(text, naming, dshRange)
-      : substitute(text, naming)
+    let output: string
+    if (targetName(entry) === 'package.json') {
+      output = rewriteManifest(text, naming, dshRange)
+    } else {
+      // Includes first, so a fragment is substituted with the document that pulls it
+      // in: fragments are template text like any other, written with the template's
+      // role name and — for the workspace layout — its paths.
+      const assembled = fragments === undefined ? text : resolveIncludes(text, fragments)
+      output = substitute(assembled, naming)
+    }
     writeFileSync(target, output)
     written.push(target)
   }

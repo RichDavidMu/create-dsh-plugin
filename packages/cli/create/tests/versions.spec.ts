@@ -48,6 +48,28 @@ describe('template dependency alignment', () => {
     }
   })
 
+  it('keeps every template manifest at 0.0.0 with dsh pinned to this scaffold', () => {
+    // `rewriteManifest` resets the version and rewrites the dsh ranges at generation
+    // time, so neither value reaches a generated project as written here. They still
+    // have to be honest for whoever reads the template: 0.0.0 is what a fresh
+    // project starts at, and the pins say which dsh this template was written for.
+    const expected = dshRange(scaffoldVersion())
+    for (const relative of [
+      'templates/bundle/__package.json',
+      'templates/layout/single/files/__package.json',
+      'templates/layout/workspace/files/__package.json',
+    ]) {
+      const manifest = readJson(relative)
+      expect(manifest.version, relative).toBe('0.0.0')
+      for (const section of ['dependencies', 'peerDependencies', 'devDependencies']) {
+        const deps = (manifest[section] ?? {}) as Record<string, string>
+        for (const [name, range] of Object.entries(deps)) {
+          if (name.startsWith('@deepseek-ai/dsh-')) expect(range, `${relative}: ${name}`).toBe(expected)
+        }
+      }
+    }
+  })
+
   it('declares the framework ranges the example plugin actually uses', () => {
     const manifest = readJson('packages/example/plugin-hello/package.json')
     const deps = {

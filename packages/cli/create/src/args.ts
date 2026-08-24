@@ -18,9 +18,24 @@ export interface ScaffoldRequest {
   readonly scope?: string
   /** The plugin's role name, used for its package name, ctx key, and tool name. */
   readonly pluginName: string
+  /** The project's shape: one package at the root, or a pnpm workspace under `packages/`. */
+  readonly layout: LayoutMode
   /** Write into a directory that already has contents. */
   readonly force: boolean
 }
+
+/**
+ * How a generated project is laid out.
+ *
+ * `single` is the default because one plugin is the common case, and a workspace
+ * whose only member is that plugin costs a nested directory, a solution tsconfig,
+ * and a `paths` entry for nothing. `workspace` is for a project that will hold
+ * more than one package.
+ */
+export type LayoutMode = 'single' | 'workspace'
+
+/** Every accepted `--layout` value, in the order help lists them. */
+export const LAYOUTS: readonly LayoutMode[] = ['single', 'workspace']
 
 /** Lowercase kebab-case: the dsh package-naming rule, and a safe npm name segment. */
 const KEBAB_CASE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
@@ -56,15 +71,33 @@ export function validateScope(value: string): string {
   return bare
 }
 
+/**
+ * Validate a layout name.
+ * @param value - the raw `--layout` value.
+ * @returns the value as a layout mode.
+ * @throws Error when it names neither layout.
+ */
+export function validateLayout(value: string): LayoutMode {
+  const layout = LAYOUTS.find(mode => mode === value)
+  if (layout === undefined) {
+    throw new Error(
+      `layout ${JSON.stringify(value)} must be "single" (one package at the project root)`
+      + ' or "workspace" (a pnpm workspace with the plugin under packages/)',
+    )
+  }
+  return layout
+}
+
 const HELP_EXAMPLES = `
 Examples:
   pnpm create @rdmu/dsh-plugin my-plugin                     scaffold into ./my-plugin
   pnpm create @rdmu/dsh-plugin my-plugin --plugin word-count name the example plugin word-count
   pnpm create @rdmu/dsh-plugin my-plugin --scope @acme        publish generated packages under @acme
+  pnpm create @rdmu/dsh-plugin my-plugin --layout workspace   a pnpm workspace, for more than one package
   pnpm create @rdmu/dsh-plugin@0.1.0-rc.9 my-plugin          target a different dsh release
 
-The scaffold version IS the dsh version generated projects depend on; there is
-no flag to choose one separately.
+The default layout is one package at the project root. The scaffold version IS the
+dsh version generated projects depend on; there is no flag to choose one separately.
 `
 
 /**
@@ -86,12 +119,15 @@ export function parseArgs(argv: readonly string[], version: string): ScaffoldReq
     .argument('<directory>', 'directory to create the project in')
     .option('--scope <scope>', 'npm scope for generated package names (e.g. @acme)')
     .option('--plugin <name>', 'role name for the example plugin', 'hello')
+    .option('--layout <mode>', `project shape: ${LAYOUTS.join(' or ')}`, 'single')
     .option('--force', 'write into a directory that already has contents', false)
-    .action((directory: string, options: { scope?: string; plugin: string; force: boolean }) => {
+    .action((directory: string, options: { scope?: string; plugin: string; layout: string; force: boolean }) => {
       if (directory.trim().length === 0) program.error('error: directory must not be blank')
       let pluginName: string
+      let layout: LayoutMode
       try {
         pluginName = validatePluginName(options.plugin)
+        layout = validateLayout(options.layout)
       } catch (error) {
         return program.error(`error: ${(error as Error).message}`)
       }
@@ -106,6 +142,7 @@ export function parseArgs(argv: readonly string[], version: string): ScaffoldReq
       resolved = {
         directory,
         pluginName,
+        layout,
         force: options.force,
         ...scope !== undefined ? { scope } : {},
       }

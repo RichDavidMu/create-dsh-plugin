@@ -15,11 +15,11 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { materialize, materializeFiles, type Naming } from './copy.ts'
 import { dshRange, scaffoldVersion } from './versions.ts'
-import type { ScaffoldRequest } from './args.ts'
+import type { LayoutMode, ScaffoldRequest } from './args.ts'
 
 /** The template trees a generated project is assembled from. */
 export interface TemplateRoots {
-  /** Repository-root files: manifests, tsconfig, lint, test, and build configuration. */
+  /** Repository-root files shared by both layouts: lint, test, editor, agent, and tooling configuration. */
   readonly root: string
   /** The example plugin package. */
   readonly plugin: string
@@ -29,6 +29,11 @@ export interface TemplateRoots {
   readonly docs: string
   /** Directory holding the tracing and source-graph tools, copied in as the project's own. */
   readonly tools: string
+  /**
+   * Directory holding one subdirectory per layout, each with `files/` to overlay
+   * on the root tree and `fragments/` for the documentation passages that differ.
+   */
+  readonly layouts: string
 }
 
 /**
@@ -60,6 +65,7 @@ export function resolveTemplateRoots(): TemplateRoots {
       bundle: join(repoRoot, 'templates', 'bundle'),
       docs: join(repoRoot, 'docs'),
       tools: join(packageRoot, 'src'),
+      layouts: join(repoRoot, 'templates', 'layout'),
     }
   }
   /* v8 ignore next 2 -- in a checkout the source layout always wins above; `pnpm run scaffold:smoke` is what
@@ -84,6 +90,7 @@ function publishedTemplateRoots(packageRoot: string): TemplateRoots {
       bundle: join(published, 'bundle'),
       docs: join(packageRoot, 'docs'),
       tools: join(published, 'tools'),
+      layouts: join(published, 'layout'),
     }
   }
   throw new Error(
@@ -98,11 +105,13 @@ export interface ScaffoldResult {
   readonly directory: string
   /** The dsh version the generated project depends on. */
   readonly dshVersion: string
+  /** The layout the project was generated in. */
+  readonly layout: LayoutMode
   /** The generated plugin's package name. */
   readonly pluginPackage: string
   /** The generated bundle's package name. */
   readonly bundlePackage: string
-  /** Absolute paths written, in traversal order. */
+  /** Absolute paths written, in traversal order, each once. */
   readonly written: readonly string[]
 }
 
@@ -158,18 +167,36 @@ export function scaffold(request: ScaffoldRequest, cwd: string = process.cwd()):
   const range = dshRange(version)
   const naming: Naming = {
     role: request.pluginName,
+    layout: request.layout,
     scopePrefix: request.scope === undefined ? '' : `@${request.scope}/`,
   }
+  const single = request.layout === 'single'
+  const fragments = join(roots.layouts, request.layout, 'fragments')
 
   const written = [
-    ...materialize(roots.root, directory, naming, range),
-    ...materialize(roots.plugin, join(directory, 'packages', 'plugin', naming.role), naming, range),
-    ...materialize(roots.bundle, join(directory, 'packages', 'bundle', `${naming.role}-bundle`), naming, range),
+    ...materialize(roots.root, directory, naming, range, fragments),
+    // In the single layout the plugin IS the project: its sources land at the root,
+    // its README becomes the project's own (which is what npm publishes), and the
+    // layout overlay below replaces the manifest and tsconfig it brought with ones
+    // that also carry the repository's scripts and compiler faces.
+    ...materialize(
+      roots.plugin,
+      single ? directory : join(directory, 'packages', 'plugin', naming.role),
+      naming,
+      range,
+      fragments,
+    ),
+    ...materialize(
+      roots.bundle,
+      single ? join(directory, 'bundle') : join(directory, 'packages', 'bundle', `${naming.role}-bundle`),
+      naming,
+      range,
+    ),
     ...materialize(roots.docs, join(directory, 'docs'), naming, range),
     // The dependency-tracing and source-graph tools travel as the project's own
     // source, so a generated project can inspect its dsh dependencies and build a
     // graph over their source with nothing installed beyond what it declares.
-    // Each bin imports a sibling by relative path, so all four land in one
+    // Each bin imports a sibling by relative path, so all five land in one
     // directory and those imports still resolve.
     ...materializeFiles(
       roots.tools,
@@ -177,13 +204,17 @@ export function scaffold(request: ScaffoldRequest, cwd: string = process.cwd()):
       ['trace.ts', 'dsh-trace.ts', 'dsh-source.ts', 'graph-runner.ts', 'dsh-graph.ts'],
       naming,
     ),
+    // Last, so the files whose shape the layout decides win over the copies the
+    // shared trees brought.
+    ...materialize(join(roots.layouts, request.layout, 'files'), directory, naming, range, fragments),
   ]
 
   return {
     directory,
     dshVersion: version,
+    layout: request.layout,
     pluginPackage: `${naming.scopePrefix}dsh-plugin-${request.pluginName}`,
     bundlePackage: `${naming.scopePrefix}dsh-bundle-${request.pluginName}`,
-    written,
+    written: [...new Set(written)],
   }
 }

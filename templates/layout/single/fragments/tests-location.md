@@ -1,0 +1,1 @@
+- **Tests live at `tests/`**, beside `src/`, never inside it as `src/__tests__/`.

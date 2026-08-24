@@ -37,6 +37,10 @@ rmSync(templateOut, { recursive: true, force: true })
 
 replace(join(repoRoot, 'templates', 'root'), join(templateOut, 'root'))
 replace(join(repoRoot, 'templates', 'bundle'), join(templateOut, 'bundle'))
+// One subdirectory per layout: `files/` overlays the root tree, `fragments/` holds
+// the documentation passages that differ. Both travel, since the layout is chosen
+// at generation time rather than at pack time.
+replace(join(repoRoot, 'templates', 'layout'), join(templateOut, 'layout'))
 replace(join(repoRoot, 'docs'), docsOut)
 
 // The example plugin travels without its build output or installed dependencies.

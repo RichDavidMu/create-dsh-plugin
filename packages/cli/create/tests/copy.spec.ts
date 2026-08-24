@@ -3,8 +3,13 @@
  * checked-in template into a named project.
  */
 
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  layoutRewrites,
+  resolveIncludes,
   rewriteManifest,
   snakeCase,
   substitute,
@@ -15,9 +20,10 @@ import {
   type Naming,
 } from '../src/copy.ts'
 
-const renamed: Naming = { role: 'word-count', scopePrefix: '@acme/' }
-const unscoped: Naming = { role: 'word-count', scopePrefix: '' }
-const unchanged: Naming = { role: TEMPLATE_ROLE, scopePrefix: TEMPLATE_SCOPE }
+const renamed: Naming = { role: 'word-count', scopePrefix: '@acme/', layout: 'workspace' }
+const unscoped: Naming = { role: 'word-count', scopePrefix: '', layout: 'workspace' }
+const unchanged: Naming = { role: TEMPLATE_ROLE, scopePrefix: TEMPLATE_SCOPE, layout: 'workspace' }
+const flat: Naming = { role: 'word-count', scopePrefix: '@acme/', layout: 'single' }
 
 describe('snakeCase', () => {
   it('converts kebab to snake and leaves a single word alone', () => {
@@ -46,13 +52,86 @@ describe('substitute', () => {
   })
 
   it('applies scope substitution even when the role is unchanged', () => {
-    expect(substitute('@example/dsh-plugin-hello', { role: TEMPLATE_ROLE, scopePrefix: '@acme/' }))
+    expect(substitute('@example/dsh-plugin-hello', { role: TEMPLATE_ROLE, scopePrefix: '@acme/', layout: 'workspace' }))
       .toBe('@acme/dsh-plugin-hello')
   })
 
   it('is a no-op when nothing was renamed', () => {
     const text = `${TEMPLATE_SCOPE}dsh-plugin-${TEMPLATE_ROLE} registers ${TEMPLATE_TOOL}`
     expect(substitute(text, unchanged)).toBe(text)
+  })
+})
+
+describe('substitute in the single layout', () => {
+  it('flattens the plugin package path away, since the plugin becomes the project', () => {
+    expect(substitute('./packages/plugin/hello/src/index.ts', flat)).toBe('./src/index.ts')
+    expect(substitute('packages/plugin/hello', flat)).toBe('.')
+  })
+
+  it('moves the bundle to a top-level directory', () => {
+    expect(substitute('packages/bundle/hello-bundle/cordis.patch.yml', flat)).toBe('bundle/cordis.patch.yml')
+    expect(substitute('pnpm --filter ./packages/bundle/hello-bundle pack', flat)).toBe('pnpm --filter ./bundle pack')
+  })
+
+  it('anchors workspace globs at the project root', () => {
+    expect(substitute('packages/*/*/tests/**/*.spec.ts', flat)).toBe('tests/**/*.spec.ts')
+    expect(substitute('packages/*/*/src/types.ts', flat)).toBe('src/types.ts')
+    expect(substitute("workspace: ['packages/*/*']", flat)).toBe("workspace: ['.']")
+  })
+
+  it('turns the workspace member list into the bundle alone, not into the root glob', () => {
+    expect(substitute('packages:\n  - packages/*/*\n', flat)).toBe('packages:\n  - bundle\n')
+  })
+
+  it('shortens the relative climb of the files that move, and only those', () => {
+    expect(substitute('"extends": "../../../../tsconfig.tests.json"', flat))
+      .toBe('"extends": "../tsconfig.tests.json"')
+    expect(substitute('[loading](../../../docs/loading-into-dsh.md)', flat))
+      .toBe('[loading](../docs/loading-into-dsh.md)')
+    // `.claude/skills/dsh-source/` sits at the same depth in both layouts, so its
+    // link three levels up must survive untouched.
+    expect(substitute('[tracing](../../../docs/tracing-dsh.md)', flat))
+      .toBe('[tracing](../../../docs/tracing-dsh.md)')
+  })
+
+  it('leaves every path alone in the workspace layout', () => {
+    expect(substitute('packages/*/*/src/**/*.ts', renamed)).toBe('packages/*/*/src/**/*.ts')
+    expect(substitute('packages/plugin/hello', renamed)).toBe('packages/plugin/word-count')
+  })
+})
+
+describe('layoutRewrites', () => {
+  it('puts the member list first, so the path rules cannot claim its glob', () => {
+    const [first] = layoutRewrites(flat)
+    expect(first?.[0]).toContain('packages:')
+  })
+
+  it('rewrites the role\'s own paths rather than the template\'s', () => {
+    const froms = layoutRewrites(flat).map(([from]) => from)
+    expect(froms).toContain('packages/plugin/word-count')
+    expect(froms).not.toContain('packages/plugin/hello')
+  })
+})
+
+describe('resolveIncludes', () => {
+  it('replaces a marker line with its fragment, without the trailing newline', () => {
+    const fragments = mkdtempSync(join(tmpdir(), 'fragments-'))
+    try {
+      writeFileSync(join(fragments, 'layout.md'), 'one\ntwo\n')
+      expect(resolveIncludes('before\n<!-- include: layout.md -->\nafter\n', fragments))
+        .toBe('before\none\ntwo\nafter\n')
+    } finally {
+      rmSync(fragments, { recursive: true, force: true })
+    }
+  })
+
+  it('leaves text with no marker untouched', () => {
+    expect(resolveIncludes('nothing to include\n', '/nowhere')).toBe('nothing to include\n')
+  })
+
+  it('fails loudly, naming the fragment the layout does not provide', () => {
+    expect(() => resolveIncludes('<!-- include: absent.md -->\n', '/nowhere'))
+      .toThrow(/asks for include absent\.md, which \/nowhere does not provide/)
   })
 })
 

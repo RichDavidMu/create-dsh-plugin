@@ -48,7 +48,8 @@ packages/
   cli/create/              the scaffold CLI (published as `@rdmu/create-dsh-plugin`)
   example/plugin-hello/     the example plugin — a REAL workspace package
 templates/
-  root/                    generated-project root files
+  root/                    generated-project root files, shared by both layouts
+  layout/{single,workspace}/  per-layout `files/` overlay and `fragments/` passages
   bundle/                  the generated bundle package
 docs/                      authoring guides, copied into generated projects
 scripts/                   repository tooling
@@ -71,6 +72,41 @@ this by merging them:
 `prepack` (`scripts/prepare-cli-package.ts`) collapses all three into the single
 `template/` tree a published tarball carries, which is why
 `resolveTemplateRoots()` has a published branch and a source branch.
+
+## The two layouts
+
+`--layout` decides the generated project's shape: `single` (the default) puts the
+plugin at the project root with the bundle in `bundle/`, `workspace` puts both
+under `packages/`. The templates are written in the **workspace** shape, because
+that is the shape this repository itself has and therefore the one that stays
+honest under review; the single layout is derived from it.
+
+Three mechanisms do that deriving, and adding a template file means deciding which
+one it belongs to:
+
+- **Path rewriting** (`layoutRewrites` in `src/copy.ts`) handles every file whose
+  only difference is path depth — globs, `paths`, `--filter` targets, relative
+  `extends`. Prefer this: it keeps one copy of the file. Rules are literal strings
+  and ordered, and the relative-depth rules name whole paths rather than blanket
+  `../../../`, because `.claude/skills/dsh-source/` does not move between layouts.
+- **A per-layout `files/` overlay** is for files whose *shape* differs, where no
+  rewrite would help: the root manifest, the root tsconfig, and `tsdown.config.ts`.
+  The overlay is materialized last, so it wins over whatever the shared trees
+  wrote at the same path.
+- **`<!-- include: name.md -->` fragments** are for the passages of `AGENTS.md`,
+  `README.md`, and the plugin's own README that genuinely differ. Includes resolve
+  *before* naming substitution, so a fragment is template text like any other, and
+  a layout that needs nothing from a passage provides an **empty** fragment. Two
+  full copies of those documents would drift; five short fragments do not.
+
+In the single layout the plugin's README becomes the project's, because that file
+is what npm publishes for a one-package repository; the project-level pointers it
+would otherwise lack arrive through the `where-to-start.md` fragment, which is
+empty in the workspace layout.
+
+A file that needs none of the three simply lives in `templates/root/`.
+`scaffold.spec.ts` asserts both layouts produce their expected trees, leave no
+template token behind, and leave no unresolved include marker.
 
 ## Commands
 

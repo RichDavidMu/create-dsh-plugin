@@ -5,7 +5,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
-import { parseArgs, validatePluginName, validateScope } from '../src/args.ts'
+import { parseArgs, validateLayout, validatePluginName, validateScope } from '../src/args.ts'
 
 describe('validatePluginName', () => {
   it('accepts a single word and kebab-case', () => {
@@ -35,20 +35,36 @@ describe('validateScope', () => {
   })
 })
 
+describe('validateLayout', () => {
+  it('accepts both layouts', () => {
+    expect(validateLayout('single')).toBe('single')
+    expect(validateLayout('workspace')).toBe('workspace')
+  })
+
+  it('rejects anything else, naming both options', () => {
+    for (const bad of ['monorepo', 'flat', 'Single', '']) {
+      expect(() => validateLayout(bad), bad).toThrow(/must be "single".*or "workspace"/s)
+    }
+  })
+})
+
 describe('parseArgs', () => {
-  it('defaults the plugin name and leaves the scope absent', () => {
+  it('defaults to the single-package layout, the common case', () => {
     expect(parseArgs(['my-project'], '0.0.0')).toEqual({
       directory: 'my-project',
       pluginName: 'hello',
+      layout: 'single',
       force: false,
     })
   })
 
-  it('carries the scope, role, and force flag', () => {
-    expect(parseArgs(['my-project', '--scope', '@acme', '--plugin', 'word-count', '--force'], '0.0.0')).toEqual({
+  it('carries the scope, role, layout, and force flag', () => {
+    const argv = ['my-project', '--scope', '@acme', '--plugin', 'word-count', '--layout', 'workspace', '--force']
+    expect(parseArgs(argv, '0.0.0')).toEqual({
       directory: 'my-project',
       pluginName: 'word-count',
       scope: 'acme',
+      layout: 'workspace',
       force: true,
     })
   })
@@ -95,6 +111,11 @@ describe('parseArgs usage errors', () => {
   it('exits on an invalid scope, naming the rule', () => {
     expect(() => parseArgs(['p', '--scope', '@Bad'], '0.0.0')).toThrow(/^exit:/)
     expect(stderr.mock.calls.flat().join('')).toMatch(/lowercase kebab-case/)
+  })
+
+  it('exits on a layout it does not have, naming both options', () => {
+    expect(() => parseArgs(['p', '--layout', 'monorepo'], '0.0.0')).toThrow(/^exit:/)
+    expect(stderr.mock.calls.flat().join('')).toMatch(/must be "single".*or "workspace"/s)
   })
 
   it('exits on an unknown option rather than ignoring it', () => {

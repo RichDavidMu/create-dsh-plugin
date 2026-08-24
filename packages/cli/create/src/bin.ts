@@ -16,6 +16,7 @@ try {
   process.stdout.write(
     `create-dsh-plugin: generated ${result.written.length} files in ${result.directory}\n`
     + `  dsh version   ${result.dshVersion}\n`
+    + `  layout        ${result.layout === 'single' ? 'single package at the project root' : 'pnpm workspace under packages/'}\n`
     + `  plugin        ${result.pluginPackage}\n`
     + `  bundle        ${result.bundlePackage}\n`
     + `  git           ${initialized ? 'initialized' : 'not initialized (already a repository, or git unavailable)'}\n`

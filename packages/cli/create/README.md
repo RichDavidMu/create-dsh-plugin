@@ -35,6 +35,7 @@ create-dsh-plugin <directory> [options]
 
   --scope <scope>   npm scope for the generated packages, e.g. @acme
   --plugin <name>   role name for the example plugin (default: hello)
+  --layout <mode>   single or workspace (default: single)
   --force           write into a directory that already has contents
   -V, --version     the scaffold version, which is also the targeted dsh version
   -h, --help
@@ -63,11 +64,14 @@ scaffold was never tested against.
 
 ## What you get
 
+By default, one package — the plugin — with the bundle beside it:
+
 ```
 my-plugin/
-  packages/
-    plugin/hello/          the plugin — a typed tool, a prompt section, an invariant companion
-    bundle/hello-bundle/   the patch layer that mounts it into a dsh profile
+  package.json             this package IS the plugin, and carries the project's scripts
+  src/                     a typed tool, a prompt section, an invariant companion
+  tests/                   its tests, mounting the real dsh services
+  bundle/                  the patch layer that mounts it into a dsh profile
   docs/                    authoring guides, plus how to read dsh's contract off disk
   scripts/dsh-graph.ts     fetch the pinned dsh source and index it as a code graph
   scripts/dsh-trace.ts     read any dsh dependency's contract from disk
@@ -75,9 +79,23 @@ my-plugin/
   AGENTS.md                the conventions an agent must follow in this project
 ```
 
-Plus the toolchain, copied from deepseek-harness so a plugin developed here builds
-under the same rules as dsh's own packages: oxlint (type-aware), tsc project
-references, tsdown, and vitest with a per-file 100% coverage floor.
+`--layout workspace` puts the same code in a pnpm workspace instead, for a project
+that will hold more than one package:
+
+```
+my-plugin/
+  packages/
+    plugin/hello/          the plugin
+    bundle/hello-bundle/   the bundle
+  pnpm-workspace.yaml      packages/*/*
+  tsconfig.json            the aggregate solution `tsc -b` builds
+  …                        docs/, scripts/, .mcp.json, AGENTS.md as above
+```
+
+Both shapes carry the same toolchain, copied from deepseek-harness so a plugin
+developed here builds under the same rules as dsh's own packages: oxlint
+(type-aware), tsc project references, tsdown, and vitest with a per-file 100%
+coverage floor.
 
 ## First steps in the generated project
 

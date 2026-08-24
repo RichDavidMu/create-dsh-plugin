@@ -81,3 +81,5 @@ without invalidating existing entries.
 - **No `presentResult`** — a completed call falls back to the generic card. A tool
   whose result deserves richer rendering should implement it and carry the fields
   through `presentationMeta`.
+
+<!-- include: where-to-start.md -->

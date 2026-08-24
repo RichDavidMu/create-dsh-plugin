@@ -1,0 +1,15 @@
+{
+  // The project `tsc -b tsconfig.json` builds: `src` compiles to `lib/types`, and
+  // tsdown then bundles that into the `lib` paths this package publishes. Also the
+  // tsserver entry, which is why it extends the base rather than restating it.
+  //
+  // Tests are deliberately absent: this face emits with `rootDir: src`, and a
+  // project cannot both emit that layout and include files outside it.
+  // `tsconfig.tests.json` is the checking face for `tests/`.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": ["src/**/*.ts"]
+}

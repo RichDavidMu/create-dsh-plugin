@@ -81,12 +81,11 @@ mkdirSync(host, { recursive: true })
 run('pnpm', ['init'], host)
 run('pnpm', ['add', '--ignore-workspace', join(smokeRoot, tarball)], host)
 
-// 4. Generate from the PUBLISHED layout, with a renamed role and a scope so the
-//    substitution paths are exercised too.
-const target = join(host, 'generated')
-run('pnpm', ['exec', 'create-dsh-plugin', 'generated', '--scope', '@smoke', '--plugin', 'word-count'], host)
-for (const relative of [
-  join('packages', 'plugin', 'word-count', 'src', 'index.ts'),
+// 4. Generate from the PUBLISHED layout, once per project shape, with a renamed
+//    role and a scope so the substitution paths are exercised too. The single
+//    layout is generated WITHOUT `--layout`, because the default is what most
+//    people will actually get.
+const shared = [
   join('scripts', 'dsh-trace.ts'),
   join('scripts', 'trace.ts'),
   join('scripts', 'dsh-source.ts'),
@@ -95,40 +94,88 @@ for (const relative of [
   join('scripts', 'install-lefthook.mjs'),
   join('scripts', 'postinstall.mjs'),
   join('docs', 'plugin-authoring.md'),
+  'tsconfig.json',
+  'tsdown.config.ts',
+  'pnpm-workspace.yaml',
   '.mcp.json',
   join('.claude', 'settings.json'),
   join('.claude', 'skills', 'dsh-source', 'SKILL.md'),
-]) {
-  if (!existsSync(join(target, relative))) {
-    throw new Error(`scaffold-smoke: the generated project is missing ${relative}`)
-  }
+]
+
+/** What each layout must have produced, beyond the files both share. */
+const expectedFiles: Record<string, readonly string[]> = {
+  single: [
+    ...shared,
+    join('src', 'index.ts'),
+    join('tests', 'plugin.spec.ts'),
+    join('tests', 'tsconfig.json'),
+    join('bundle', 'cordis.patch.yml'),
+    join('bundle', 'package.json'),
+  ],
+  workspace: [
+    ...shared,
+    join('packages', 'plugin', 'word-count', 'src', 'index.ts'),
+    join('packages', 'plugin', 'word-count', 'tests', 'plugin.spec.ts'),
+    join('packages', 'bundle', 'word-count-bundle', 'cordis.patch.yml'),
+  ],
 }
 
-// 5. Prove the generated project stands on its own, coverage floor included.
-//    DSH_GRAPH=0 for the install: the release gate must not clone a 340 MB dsh
-//    snapshot, and must pass on a machine with no network. Step 7 covers that
-//    path offline instead.
-run('pnpm', ['install'], target, { DSH_GRAPH: '0' })
-run('pnpm', ['run', 'check'], target)
-run('pnpm', ['run', 'test:coverage'], target)
+for (const layout of ['single', 'workspace'] as const) {
+  const name = `generated-${layout}`
+  const target = join(host, name)
+  const layoutFlags = layout === 'single' ? [] : ['--layout', layout]
+  run('pnpm', ['exec', 'create-dsh-plugin', name, '--scope', '@smoke', '--plugin', 'word-count', ...layoutFlags], host)
 
-// 6. The tracing tool must work inside the generated project, since that is
-//    where a plugin author reads a dsh contract from.
-run('pnpm', ['run', 'trace', '@deepseek-ai/dsh-tools'], target)
+  for (const relative of expectedFiles[layout] ?? []) {
+    if (!existsSync(join(target, relative))) {
+      throw new Error(`scaffold-smoke: the ${layout} project is missing ${relative}`)
+    }
+  }
+  if (layout === 'single' && existsSync(join(target, 'packages'))) {
+    throw new Error('scaffold-smoke: the single layout produced a packages/ directory')
+  }
 
-// 7. The source graph has to resolve its own remote and tag from the installed
-//    manifest, and `--dry-run` proves that offline. `DSH_GRAPH=0` is set on purpose:
-//    a dry run must stay available where CI disables the graph, or this assertion
-//    would quietly stop asserting anything.
-const report = capture('pnpm', ['run', 'dsh:graph', '--dry-run'], target, { DSH_GRAPH: '0' })
-for (const expected of [
-  /dsh source graph for dsh-v\d+\.\d+\.\d+/,
-  /remote\s+https:\/\/github\.com\/deepseek-ai\/deepseek-harness\.git/,
-  /snapshot\s+.*\.dsh-source[/\\]dsh-v/,
-  /project graph\s+codegraph init /,
-]) {
-  if (!expected.test(report)) {
-    throw new Error(`scaffold-smoke: the dry run did not report ${String(expected)}:\n${report}`)
+  // 5. Prove the generated project stands on its own, coverage floor included.
+  //    DSH_GRAPH=0 for the install: the release gate must not clone a 340 MB dsh
+  //    snapshot, and must pass on a machine with no network. Step 7 covers that
+  //    path offline instead.
+  run('pnpm', ['install'], target, { DSH_GRAPH: '0' })
+  run('pnpm', ['run', 'check'], target)
+  run('pnpm', ['run', 'test:coverage'], target)
+
+  // 6. The tracing tool must work inside the generated project, since that is
+  //    where a plugin author reads a dsh contract from. Where dsh resolves from
+  //    differs by layout — root dependencies against a package's peers — so this
+  //    is worth running in both.
+  run('pnpm', ['run', 'trace', '@deepseek-ai/dsh-tools'], target)
+
+  // 7. The source graph has to resolve its own remote and tag from the installed
+  //    manifest, and `--dry-run` proves that offline. `DSH_GRAPH=0` is set on
+  //    purpose: a dry run must stay available where CI disables the graph, or this
+  //    assertion would quietly stop asserting anything.
+  const report = capture('pnpm', ['run', 'dsh:graph', '--dry-run'], target, { DSH_GRAPH: '0' })
+  for (const expected of [
+    /dsh source graph for dsh-v\d+\.\d+\.\d+/,
+    /remote\s+https:\/\/github\.com\/deepseek-ai\/deepseek-harness\.git/,
+    /snapshot\s+.*\.dsh-source[/\\]dsh-v/,
+    /project graph\s+codegraph init /,
+  ]) {
+    if (!expected.test(report)) {
+      throw new Error(`scaffold-smoke: the ${layout} dry run did not report ${String(expected)}:\n${report}`)
+    }
+  }
+
+  // 8. In the single layout the project root IS the published package, so its
+  //    `files` list is the only thing keeping `docs/`, `scripts/`, and a 300 MB dsh
+  //    snapshot out of a plugin author's tarball.
+  if (layout === 'single') {
+    run('pnpm', ['run', 'pack:bundle'], target)
+    const packed = capture('pnpm', ['pack', '--pack-destination', target], target).trim().split('\n').at(-1) ?? ''
+    for (const entry of capture('tar', ['-tzf', packed], target).split('\n').filter(line => line.length > 0)) {
+      if (!/^package\/(lib\/|package\.json|README\.md)/.test(entry)) {
+        throw new Error(`scaffold-smoke: the single layout would publish ${entry}`)
+      }
+    }
   }
 }
 

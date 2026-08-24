@@ -1,0 +1,1 @@
+- **Tests live at `packages/<group>/<pkg>/tests/`**, never `src/__tests__/`.

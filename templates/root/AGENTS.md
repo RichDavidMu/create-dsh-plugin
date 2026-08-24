@@ -34,21 +34,7 @@ the full reference.
 
 ## Layout
 
-```
-packages/
-  plugin/hello/          the plugin: one tool, one prompt section
-  bundle/hello-bundle/   the patch layer that mounts it into a dsh profile
-docs/                    authoring guides — the common path, plus how to trace the rest
-scripts/                 tooling shipped by the scaffold; not linted or built here
-.dsh-source/             the pinned dsh release's source, fetched and indexed; never committed
-tsconfig.base.json       shared compiler options; also the vitest paths facade
-tsconfig.json            the aggregate solution `tsc -b` builds
-```
-
-`scripts/` is excluded from lint and from the TypeScript solution: those files
-arrive already typechecked and linted from `@rdmu/create-dsh-plugin`, and re-checking
-them here would only ask you to maintain someone else's code. Your own code lives
-under `packages/`.
+<!-- include: layout.md -->
 
 ## Commands
 
@@ -94,7 +80,7 @@ ways local tests do not catch.
   the mock was called. Every plugin test suite must also dispose the fiber and
   assert the contribution is withdrawn — that is what makes hot reload safe.
 - **Types-only files stay types-only.** `src/types.ts` holds no runtime code.
-- **Tests live at `packages/<group>/<pkg>/tests/`**, never `src/__tests__/`.
+<!-- include: tests-location.md -->
 
 ## Style
 
@@ -117,10 +103,4 @@ version of the `@rdmu/create-dsh-plugin` release that generated this project. ds
 packages are cut as one set and are not independently compatible, so **never bump
 one alone**. Upgrade them all together, then run `pnpm run check`.
 
-## Adding a package
-
-1. `mkdir -p packages/<group>/<name>/{src,tests}`
-2. Copy `package.json` and `tsconfig.json` from `packages/plugin/hello` and adjust.
-3. Add one `references` entry to the root `tsconfig.json`.
-4. Add one `paths` entry to `tsconfig.base.json` pointing at `src`.
-5. If it should mount in a profile, add a row to the bundle's `cordis.patch.yml`.
+<!-- include: adding-a-package.md -->

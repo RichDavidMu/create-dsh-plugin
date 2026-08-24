@@ -90,7 +90,7 @@
     },
     {
       "jsPlugins": ["@stylistic/eslint-plugin"],
-      "files": ["packages/**/*.ts"],
+      "files": ["packages/*/*/src/**/*.ts", "packages/*/*/tests/**/*.ts"],
       "rules": {
         "@stylistic/indent": ["error", 2],
         "@stylistic/semi": ["error", "never"],

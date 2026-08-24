@@ -1,6 +1,6 @@
 {
   "name": "@example/dsh-bundle-hello",
-  "version": "0.1.0-rc.8",
+  "version": "0.0.0",
   "description": "Profile bundle that mounts @example/dsh-plugin-hello into a dsh composition",
   "license": "MIT",
   "type": "module",
