@@ -70,14 +70,14 @@ pnpm run trace @deepseek-ai/dsh-tools @deepseek-ai/dsh-system-prompt
 ```
 
 ```
-@deepseek-ai/dsh-tools@0.1.0-rc.8
-  installed at   /path/node_modules/.pnpm/@deepseek-ai+dsh-tools@0.1.0-rc.8_<hash>/node_modules/@deepseek-ai/dsh-tools
+@deepseek-ai/dsh-tools@0.1.1-rc.1
+  installed at   /path/node_modules/.pnpm/@deepseek-ai+dsh-tools@0.1.1-rc.1_<hash>/node_modules/@deepseek-ai/dsh-tools
   contract       10 declaration file(s) — the JSDoc here IS the contract:
                  /path/.../lib/types/index.d.ts
                  ...
   README         /path/.../README.md
-  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.0-rc.8/packages/core/tools
-  snapshot       /project/.dsh-source/dsh-v0.1.0-rc.8
+  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.1-rc.1/packages/core/tools
+  snapshot       /project/.dsh-source/dsh-v0.1.1-rc.1
 ```
 
 Run it before grepping, because the paths are not where you would guess them.
@@ -151,10 +151,10 @@ Both halves come from the installed manifest: `repository.url` gives the remote,
 `repository.directory` gives the package's path in the monorepo, and the tag is
 `dsh-v` followed by the version — which is exactly how `pnpm run dsh:graph`
 decides what to clone, so the snapshot can never be a different release than the
-one this project depends on. For `@deepseek-ai/dsh-tools@0.1.0-rc.8`:
+one this project depends on. For `@deepseek-ai/dsh-tools@0.1.1-rc.1`:
 
 ```
-https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.0-rc.8/packages/core/tools
+https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.1-rc.1/packages/core/tools
 ```
 
 Alongside `src/` and `tests/`, the repository carries material the tarballs omit
@@ -185,16 +185,17 @@ rather than trusting the snapshot to describe your working copy.
 ## Version alignment
 
 `@rdmu/create-dsh-plugin` releases in lockstep with dsh: the scaffold version IS the
-dsh version a generated project depends on, and every `@deepseek-ai/dsh-*`
-dependency is pinned **exactly** rather than with a caret.
+dsh version a generated project depends on — plus a `.rev.N` suffix naming which of
+its own releases against that dsh it is — and every `@deepseek-ai/dsh-*` dependency
+is pinned **exactly** rather than with a caret.
 
-That is deliberate. `^0.1.0-rc.8` also admits `0.1.0-rc.9` and `0.1.0`, so a
+That is deliberate. `^0.1.1-rc.1` also admits `0.1.1-rc.2` and `0.1.1`, so a
 caret would let a project silently install a dsh its scaffold was never tested
 against. dsh packages are cut as one set and are not independently compatible.
 
 To target a different dsh release, generate with that scaffold release —
-`pnpm create @rdmu/dsh-plugin@0.1.0-rc.9 my-plugin` — rather than editing ranges by
-hand. To upgrade an existing project, bump every `@deepseek-ai/dsh-*` version
-together, run `pnpm run dsh:graph` so the snapshot follows the new tag, then
+`pnpm create @rdmu/dsh-plugin@0.1.2-rc.1.rev.1 my-plugin` — rather than editing
+ranges by hand. To upgrade an existing project, bump every `@deepseek-ai/dsh-*`
+version together, run `pnpm run dsh:graph` so the snapshot follows the new tag, then
 `pnpm run check` before trusting it. The old snapshot stays under `.dsh-source/`
 beside the new one; delete it when you want the disk back.

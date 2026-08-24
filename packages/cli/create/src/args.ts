@@ -3,8 +3,8 @@
  *
  * Deliberately absent: any flag selecting a dsh version. This scaffold releases
  * in lockstep with DeepSeek Harness, so the release a person runs decides the
- * dsh version (see `./versions.ts`). Adding a flag would create two sources of
- * truth for one fact.
+ * dsh version (see `./versions.ts`, where the `.rev.N` suffix is explained too).
+ * Adding a flag would create two sources of truth for one fact.
  * @module @rdmu/create-dsh-plugin/args
  */
 
@@ -94,10 +94,11 @@ Examples:
   pnpm create @rdmu/dsh-plugin my-plugin --plugin word-count name the example plugin word-count
   pnpm create @rdmu/dsh-plugin my-plugin --scope @acme        publish generated packages under @acme
   pnpm create @rdmu/dsh-plugin my-plugin --layout workspace   a pnpm workspace, for more than one package
-  pnpm create @rdmu/dsh-plugin@0.1.0-rc.9 my-plugin          target a different dsh release
+  pnpm create @rdmu/dsh-plugin@0.1.2-rc.1.rev.1 my-plugin    target a different dsh release
 
 The default layout is one package at the project root. The scaffold version IS the
-dsh version generated projects depend on; there is no flag to choose one separately.
+dsh version generated projects depend on, plus a .rev.N suffix for our own releases
+against it; there is no flag to choose a dsh version separately.
 `
 
 /**

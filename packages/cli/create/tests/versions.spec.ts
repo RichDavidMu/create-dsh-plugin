@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { dshRange, FRAMEWORK_VERSIONS, NODE_ENGINES, PACKAGE_MANAGER, scaffoldVersion, TOOLCHAIN_VERSIONS } from '../src/versions.ts'
+import { dshRange, FRAMEWORK_VERSIONS, NODE_ENGINES, PACKAGE_MANAGER, REVISION_MARKER, scaffoldVersion, TOOLCHAIN_VERSIONS } from '../src/versions.ts'
 
 const repoRoot = new URL('../../../../', import.meta.url)
 
@@ -32,7 +32,18 @@ describe('scaffoldVersion', () => {
 
 describe('dshRange', () => {
   it('pins exactly, so a scaffold release cannot install an untested dsh', () => {
-    expect(dshRange('0.1.0-rc.7')).toBe('0.1.0-rc.7')
+    expect(dshRange('0.1.1-rc.1')).toBe('0.1.1-rc.1')
+  })
+
+  it('cuts this scaffold\'s own revision off, since npm has no such dsh version', () => {
+    expect(dshRange('0.1.1-rc.1.rev.1')).toBe('0.1.1-rc.1')
+    expect(dshRange('0.1.1-rc.1.rev.12')).toBe('0.1.1-rc.1')
+    expect(dshRange(`0.2.0${REVISION_MARKER}3`)).toBe('0.2.0')
+  })
+
+  it('targets the dsh release this package names, revision suffix aside', () => {
+    const version = scaffoldVersion()
+    expect(version.startsWith(dshRange(version))).toBe(true)
   })
 })
 

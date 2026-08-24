@@ -6,20 +6,39 @@ on it.
 
 ## The one contract that governs everything
 
-**This package's version IS the dsh version generated projects depend on.**
+**This package's version IS the dsh version generated projects depend on, plus a
+`.rev.N` suffix naming which of our releases against that dsh it is.**
+
+```
+0.1.1-rc.1.rev.2   →  generated projects pin @deepseek-ai/dsh-*@0.1.1-rc.1
+└── dsh ──┘ └─┬─┘
+             our second release targeting it
+```
 
 There is no `--dsh-version` flag and there must never be one. A release of this
 scaffold targets exactly one dsh release, pins it exactly (no caret), and is
-tested against it. Three places state that version and `versions.spec.ts` asserts
-they agree:
+tested against it. `dshRange()` cuts the suffix off at `REVISION_MARKER`, which is
+a literal `.rev.` rather than a positional rule, so dsh changing the shape of its
+own prerelease cannot break the parse.
+
+Three places state the version and `versions.spec.ts` asserts they agree:
 
 - the root `package.json`
 - `packages/cli/create/package.json`
 - `packages/example/plugin-hello/package.json`
 
-Releasing a new dsh version means bumping all three, updating
-`FRAMEWORK_VERSIONS` in `packages/cli/create/src/versions.ts` if Cordis or
-schemastery moved, reinstalling, and running `pnpm run scaffold:smoke`.
+The template manifests (`templates/bundle/`, `templates/layout/*/files/`) state
+`0.0.0` plus the **dsh** version in their pins, which `versions.spec.ts` also
+asserts; `rewriteManifest` replaces both at generation time.
+
+Two kinds of release, both bumping those three manifests:
+
+- **A new dsh release**: set the version to `<dsh>.rev.1`, update
+  `FRAMEWORK_VERSIONS` in `packages/cli/create/src/versions.ts` if Cordis or
+  schemastery moved, update the dsh pins in every manifest, reinstall, run
+  `pnpm peers check`, and run `pnpm run scaffold:smoke`.
+- **A scaffold-only fix**: bump `.rev.N` alone. npm never allows republishing a
+  version, so even a typo fix needs a new number; nothing else changes.
 
 ## Releasing
 
