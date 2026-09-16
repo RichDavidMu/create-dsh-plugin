@@ -51,10 +51,13 @@ Two kinds of release, both bumping those three manifests:
 
 `pnpm run verify-releasable` is the local preflight; the same script runs first in
 CI so a duplicate version or an unownable name fails in seconds rather than after
-the smoke test. `.github/workflows/release.yml` is the one button
-(`workflow_dispatch`, with a `dry_run` input) and runs, in order:
-verify-releasable → check → coverage → scaffold:smoke → `pnpm publish
---provenance` → tag.
+the smoke test. `.github/workflows/release.yml` has two ways in and one gate: push
+a tag `v<version>` to publish under both `latest` and `next`, or run it by hand
+(`workflow_dispatch`, with a `dry_run` input and a single-`tag` input). Either way
+it runs, in order: verify-releasable → check → coverage → scaffold:smoke → `pnpm
+publish --provenance` → tag. The version always comes from the manifests, never
+from the tag name or an input; a tag push asserts the tag matches the manifest
+before publishing, and only a manual run creates the tag at the end.
 
 The npm name is `@rdmu/create-dsh-plugin`; the unscoped `create-dsh-plugin` was
 already taken on npm by an unrelated account. The **bin** stays

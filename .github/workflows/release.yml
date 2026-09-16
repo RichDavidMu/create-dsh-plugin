@@ -1,11 +1,18 @@
 name: Release
 
-# One button: run the full gate, then publish to npm.
+# Two ways in, one gate: run the full release gate, then publish to npm.
 #
-# The version comes from the manifests, not from an input — this scaffold's
-# version IS the dsh version it targets, so choosing it at release time would
-# create a second source of truth. Bump the three manifests in a commit, then run
-# this workflow.
+#   - Push a tag `v<version>`: publishes under both `latest` and `next`. The tag
+#     already exists, so this path does not create one.
+#   - Run it by hand (workflow_dispatch): publishes under the single `tag` input,
+#     or only packs when `dry_run` is set, and creates + pushes the `v<version>`
+#     tag at the end.
+#
+# The version always comes from the manifests, never from an input or the tag
+# name — this scaffold's version IS the dsh version it targets, so choosing it at
+# release time would create a second source of truth. On a tag push the tag name
+# must match the manifest version, which is asserted before anything is published.
+# Bump the three manifests in a commit first.
 on:
   workflow_dispatch:
     inputs:
@@ -17,6 +24,9 @@ on:
         description: 'npm dist-tag (use "next" for a prerelease, "latest" for a stable release)'
         type: string
         default: next
+  push:
+    tags:
+      - 'v*'
 
 concurrency:
   group: release
@@ -72,6 +82,33 @@ jobs:
           echo "value=$(node -p "require('./packages/cli/create/package.json').version")" >> "$GITHUB_OUTPUT"
           echo "name=$(node -p "require('./packages/cli/create/package.json').name")" >> "$GITHUB_OUTPUT"
 
+      # A tag push is a release request whose version is the tag name, but the
+      # manifest stays the source of truth — so the two must agree. Cheapest
+      # possible failure for a tag cut against the wrong commit.
+      - name: verify tag matches manifest
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "pushed tag '$GITHUB_REF_NAME' does not match manifest version 'v$VERSION'" >&2
+            exit 1
+          fi
+
+      # A tag push publishes under both `latest` and `next`; a manual run publishes
+      # under its single `tag` input. `pnpm publish` takes one dist-tag, so the
+      # second is added afterward — `also` is empty for a manual run.
+      - name: resolve dist-tags
+        id: disttags
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "primary=latest" >> "$GITHUB_OUTPUT"
+            echo "also=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "primary=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+            echo "also=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: pack (dry run)
         if: inputs.dry_run
         run: pnpm --filter ./packages/cli/create pack --pack-destination "$RUNNER_TEMP"
@@ -81,12 +118,25 @@ jobs:
         # Filtered by PATH, not by package name, so renaming the package needs no
         # change here. `--access public` is a no-op for an unscoped name and
         # required for a scoped one, so it is stated unconditionally.
-        run: pnpm --filter ./packages/cli/create publish --access public --provenance --tag "${{ inputs.tag }}" --no-git-checks
+        run: pnpm --filter ./packages/cli/create publish --access public --provenance --tag "${{ steps.disttags.outputs.primary }}" --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # The second dist-tag for a tag-push release; skipped for a manual run, which
+      # leaves `also` empty. Uses the auth token setup-node wrote into .npmrc.
+      - name: add secondary dist-tag
+        if: ${{ !inputs.dry_run && steps.disttags.outputs.also != '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+          PACKAGE: ${{ steps.version.outputs.name }}
+          ALSO: ${{ steps.disttags.outputs.also }}
+        run: npm dist-tag add "$PACKAGE@$VERSION" "$ALSO"
+
+      # Only a manual release creates the tag; a tag push already has one, and
+      # re-creating it would collide.
       - name: tag the release
-        if: ${{ !inputs.dry_run }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}
         env:
           VERSION: ${{ steps.version.outputs.value }}
           PACKAGE: ${{ steps.version.outputs.name }}
@@ -100,6 +150,8 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.value }}
           PACKAGE: ${{ steps.version.outputs.name }}
+          PRIMARY: ${{ steps.disttags.outputs.primary }}
+          ALSO: ${{ steps.disttags.outputs.also }}
         run: |
           # `npm create` drops the `create-` segment: @rdmu/create-dsh-plugin is
           # invoked as `pnpm create @rdmu/dsh-plugin`.
@@ -110,7 +162,9 @@ jobs:
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "Dry run: every gate passed and the tarball packed. Nothing was published."
             else
-              echo "Published to npm under dist-tag \`${{ inputs.tag }}\`, tagged \`v$VERSION\`."
+              TAGS="\`$PRIMARY\`"
+              [ -n "$ALSO" ] && TAGS="$TAGS and \`$ALSO\`"
+              echo "Published to npm under dist-tag $TAGS, tagged \`v$VERSION\`."
               echo
               echo '```sh'
               echo "pnpm create $INVOCATION@$VERSION my-plugin"
