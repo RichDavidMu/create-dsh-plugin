@@ -8,8 +8,8 @@ dsh 自己的工具链，以及让 agent 能从 dsh 本身回答 dsh 问题所�
 
 ## 它有什么不一样
 
-- **版本号就是契约。** `@rdmu/create-dsh-plugin@0.1.3-alpha.2.rev.1` 生成的项目精确
-  钉死 `@deepseek-ai/dsh-*@0.1.3-alpha.2` —— 不带 caret。没有 `--dsh-version` 参数，
+- **版本号就是契约。** `@rdmu/create-dsh-plugin@0.1.5-rc.2.rev.1` 生成的项目精确
+  钉死 `@deepseek-ai/dsh-*@0.1.5-rc.2` —— 不带 caret。没有 `--dsh-version` 参数，
   因为一个事实不该有两处真相。
 - **生成的项目是去读 dsh，而不是猜 dsh。** `pnpm install` 会按不可变的 release tag
   拉下该版本的完整源码，并建成一张 code graph；`.mcp.json` 与 `dsh-source` skill 把它
@@ -69,12 +69,12 @@ create-dsh-plugin <directory> [options]
 ## 版本号就是契约
 
 **这个包的版本号 IS 它所针对的 dsh 版本，再加上我们自己对该版本的修订号。**
-`@rdmu/create-dsh-plugin@0.1.3-alpha.2.rev.1` 生成的项目精确钉死
-`@deepseek-ai/dsh-*@0.1.3-alpha.2` —— 不带 caret。没有 `--dsh-version` 参数，因为那会让
+`@rdmu/create-dsh-plugin@0.1.5-rc.2.rev.1` 生成的项目精确钉死
+`@deepseek-ai/dsh-*@0.1.5-rc.2` —— 不带 caret。没有 `--dsh-version` 参数，因为那会让
 一个事实有两处真相。
 
 ```
-0.1.3-alpha.2.rev.1
+0.1.5-rc.2.rev.1
 └── dsh ──┘ └─┬─┘
              我们针对该 dsh 的第一次发布；只改脚手架的修复发 .rev.2
 ```
@@ -85,7 +85,7 @@ dsh 的修复，也需要一个新号。它在进入生成项目的依赖之前�
 要针对另一个 dsh 版本，就选那一版脚手架：
 
 ```sh
-npm create @rdmu/dsh-plugin@0.1.3-alpha.2.rev.1 my-plugin
+npm create @rdmu/dsh-plugin@0.1.5-rc.2.rev.1 my-plugin
 ```
 
 dsh 的各个包是作为一整套切出来的，彼此并不能独立兼容，所以精确钉版才是诚实的范围：
@@ -175,7 +175,7 @@ dsh --profile tui --dump-config    # 确认这一行进了合成后的树
 `.mcp.json` 接好的 codegraph MCP server 查询它，人则用 CLI：
 
 ```sh
-codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v0.1.3-alpha.2
+codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v0.1.5-rc.2
 pnpm run dsh:graph --dry-run   # 离线查看它会拉什么、建什么索引
 ```
 
@@ -191,14 +191,14 @@ dsh-trace @deepseek-ai/dsh-tools
 ```
 
 ```
-@deepseek-ai/dsh-tools@0.1.3-alpha.2
+@deepseek-ai/dsh-tools@0.1.5-rc.2
   installed at   .../node_modules/@deepseek-ai/dsh-tools
   contract       10 declaration file(s) — the JSDoc here IS the contract:
                  .../lib/types/index.d.ts
                  ...
   README         .../README.md
-  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.3-alpha.2/packages/core/tools
-  snapshot       .../.dsh-source/dsh-v0.1.3-alpha.2
+  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.5-rc.2/packages/core/tools
+  snapshot       .../.dsh-source/dsh-v0.1.5-rc.2
 ```
 
 发布出来的 `.d.ts` 保留了每一段 JSDoc —— 包括事件上的 `@mode`，它告诉你一个 listener
