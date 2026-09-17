@@ -9,8 +9,8 @@ questions from dsh itself.
 
 ## What makes it different
 
-- **The version is the contract.** `@rdmu/create-dsh-plugin@0.1.1-rc.2.rev.1`
-  generates a project pinned to `@deepseek-ai/dsh-*@0.1.1-rc.2` — exactly, no
+- **The version is the contract.** `@rdmu/create-dsh-plugin@0.1.2-rc.1.rev.1`
+  generates a project pinned to `@deepseek-ai/dsh-*@0.1.2-rc.1` — exactly, no
   caret. There is no `--dsh-version` flag, because one fact should not have two
   sources of truth.
 - **The generated project reads dsh instead of guessing at it.** `pnpm install`
@@ -73,12 +73,12 @@ yours, not as a template you have to find-and-replace.
 ## The version is the contract
 
 **This package's version IS the dsh version it targets, plus our revision of it.**
-`@rdmu/create-dsh-plugin@0.1.1-rc.2.rev.1` generates a project pinned to
-`@deepseek-ai/dsh-*@0.1.1-rc.2` — exactly, no caret. There is no `--dsh-version`
+`@rdmu/create-dsh-plugin@0.1.2-rc.1.rev.1` generates a project pinned to
+`@deepseek-ai/dsh-*@0.1.2-rc.1` — exactly, no caret. There is no `--dsh-version`
 flag, because that would be a second source of truth for one fact.
 
 ```
-0.1.1-rc.2.rev.1
+0.1.2-rc.1.rev.1
 └── dsh ──┘ └─┬─┘
              our first release targeting that dsh; a scaffold-only fix ships .rev.2
 ```
@@ -188,7 +188,7 @@ queries it through the codegraph MCP server the generated `.mcp.json` wires up, 
 a person through the CLI:
 
 ```sh
-codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v0.1.1-rc.2
+codegraph explore 'how tool timeouts are enforced' --path .dsh-source/dsh-v0.1.2-rc.1
 pnpm run dsh:graph --dry-run   # what it would fetch and index, offline
 ```
 
@@ -205,14 +205,14 @@ dsh-trace @deepseek-ai/dsh-tools
 ```
 
 ```
-@deepseek-ai/dsh-tools@0.1.1-rc.2
+@deepseek-ai/dsh-tools@0.1.2-rc.1
   installed at   .../node_modules/@deepseek-ai/dsh-tools
   contract       10 declaration file(s) — the JSDoc here IS the contract:
                  .../lib/types/index.d.ts
                  ...
   README         .../README.md
-  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.1-rc.2/packages/core/tools
-  snapshot       .../.dsh-source/dsh-v0.1.1-rc.2
+  source         https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.1.2-rc.1/packages/core/tools
+  snapshot       .../.dsh-source/dsh-v0.1.2-rc.1
 ```
 
 The published `.d.ts` files keep every JSDoc block — including `@mode` on events,

@@ -13,7 +13,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { CallId } from '@deepseek-ai/dsh-llm'
+import { ToolCallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import * as pluginHello from '../src/index.ts'
@@ -35,7 +35,7 @@ afterEach(async () => {
 /** Execute `hello_greet` through the real registry and return the outcome. */
 async function callGreet(args: Record<string, unknown>): ReturnType<ToolRuntime['execute']> {
   return ctx.tools.execute({
-    callId: CallId('test-call'),
+    callId: ToolCallId('test-call'),
     name: 'hello_greet',
     arguments: args,
     signal,
@@ -109,7 +109,7 @@ describe('plugin-hello', () => {
     // `executionMode` is what the agent loop's scheduler asks, and it is the path
     // that calls the definition's `isConcurrencySafe`.
     expect(ctx.tools.executionMode({
-      callId: CallId('test-call'),
+      callId: ToolCallId('test-call'),
       name: 'hello_greet',
       arguments: { name: 'Ada' },
       signal,

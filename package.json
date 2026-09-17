@@ -1,6 +1,6 @@
 {
   "name": "create-dsh-plugin-root",
-  "version": "0.1.1-rc.2.rev.1",
+  "version": "0.1.2-rc.1.rev.1",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -26,10 +26,11 @@
     "postinstall": "node scripts/install-lefthook.mjs"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-attachment": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-brand": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-timeout": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-typert-protocol": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-attachment": "0.1.2-rc.1",
+    "@deepseek-ai/dsh-brand": "0.1.2-rc.1",
+    "@deepseek-ai/dsh-session-projection": "0.1.2-rc.1",
+    "@deepseek-ai/dsh-timeout": "0.1.2-rc.1",
+    "@deepseek-ai/dsh-typert-protocol": "0.1.2-rc.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^22.20.0",
     "@vitest/coverage-v8": "^4.1.8",

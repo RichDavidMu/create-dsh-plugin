@@ -306,7 +306,7 @@ expect(ctx.tools.schemas().find(s => s.name === 'hello_greet')).toBeDefined()
 
 // What executing it produces, through the real pipeline:
 const result = await ctx.tools.execute({
-  callId: CallId('t1'), name: 'hello_greet', arguments: { name: 'Ada' }, signal,
+  callId: ToolCallId('t1'), name: 'hello_greet', arguments: { name: 'Ada' }, signal,
 })
 
 // Mandatory: disposal withdraws the registration.
