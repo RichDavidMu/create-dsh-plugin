@@ -3,7 +3,7 @@
  * substitution, and the version rewriting a real invocation produces.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -208,6 +208,15 @@ describe('scaffold', () => {
       'packages/bundle/hello-bundle/package.json',
     ]) {
       expect(existsSync(join(result.directory, relative)), relative).toBe(true)
+    }
+  })
+
+  it('makes CLAUDE.md a symlink to AGENTS.md, so both name one file rather than a copy that drifts', () => {
+    for (const layout of ['single', 'workspace'] as const) {
+      const result = scaffold(request({ directory: layout, layout }), workspace)
+      const claude = join(result.directory, 'CLAUDE.md')
+      expect(lstatSync(claude).isSymbolicLink(), layout).toBe(true)
+      expect(readlinkSync(claude), layout).toBe('AGENTS.md')
     }
   })
 

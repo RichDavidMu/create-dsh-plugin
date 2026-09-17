@@ -22,7 +22,7 @@
  * @module @rdmu/create-dsh-plugin/copy
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { LayoutMode } from './args.ts'
 
@@ -233,6 +233,11 @@ export function materializeFiles(from: string, to: string, names: readonly strin
  *
  * Directory names pass through the same substitution as file contents, so a
  * template package directory named after the role follows the rename.
+ *
+ * A symlink in the template is reproduced as a symlink rather than dereferenced:
+ * the generated project's `CLAUDE.md` is a link to `AGENTS.md`, so every agent
+ * tool reads one file instead of two copies that drift. The link text is
+ * substituted like any path.
  * @param from - the template directory to read.
  * @param to - the target directory, created if absent.
  * @param naming - the target names.
@@ -252,7 +257,13 @@ export function materialize(
   for (const entry of readdirSync(from).sort()) {
     const source = join(from, entry)
     const target = join(to, substitute(targetName(entry), naming))
-    if (statSync(source).isDirectory()) {
+    const stats = lstatSync(source)
+    if (stats.isSymbolicLink()) {
+      symlinkSync(substitute(readlinkSync(source), naming), target)
+      written.push(target)
+      continue
+    }
+    if (stats.isDirectory()) {
       if (entry === 'node_modules' || entry === 'lib') continue
       written.push(...materialize(source, target, naming, dshRange, fragments))
       continue
